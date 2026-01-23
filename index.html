@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localizationews</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="top-bar">
+                <div id="current-date">January 24 2026</div>
+                <div class="weather">Sunny, 72°F</div>
+                <div class="location">Salem, TamilNadu</div>
+            </div>
+            <h1>PLACEHOLDER</h1>
+            
+            
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="feed.html">My Feed</a></li>
+                    <li><a href="ai-assistant.html">AI Assistant</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                    <li><a href="home-signed-in.html">Sign In</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="marquee-container">
+            <div class="marquee-content">
+                Trump’s "Board of Peace": US President Donald Trump has officially signed the charter for the "Board of Peace" at the World Economic Forum in Davos. The organization, which includes founding nations like Argentina, Egypt, Pakistan, and the UAE, aims to resolve international conflicts, specifically focusing on a Gaza ceasefire plan.
+
+The Greenland Dispute: Tensions eased slightly as President Trump ruled out using force to acquire Greenland, though he confirmed a "framework deal" with NATO regarding the island is in progress.
+
+Vietnam Leadership: Tô Lâm has been re-elected as General Secretary of the Communist Party of Vietnam, consolidating his position as the country's most powerful leader.
+
+Uganda Protests: Deadly protests have erupted in Uganda following disputed election results, with reports of at least 30 people killed and thousands arrested.
+            </div>
+        </div>
+<br>
+<br>
+        <main>
+            <section class="hero-section">
+                <div class="hero-image">
+                    <img src="./assets/Switzerland-Davos-Trump.webp" alt="Vintage Gang Photo">
+                </div>
+                <div class="hero-content">
+                    <div class="text-mono mb-1">Vol. 2026 • No. 1</div>
+<h2>Donald J. Trump: The "Board of Peace"</h2>
+<h3 class="mb-2">Who are the founding members of Trump’s new global order?</h3>
+<p class="mb-2">
+    In a historic and controversial ceremony in Davos, President Trump officially ratified the 
+    charter for his "Board of Peace." Claiming the organization will solve conflicts where the 
+    UN has failed, Trump has positioned himself as the permanent Chairman, joined by founding 
+    nations including Argentina, Egypt, Saudi Arabia, and the UAE.
+</p>
+<p class="mb-2">
+    The era of traditional multilateralism is under fire. As Trump pushes a "New Gaza" 
+    masterplan featuring Mediterranean skyscrapers and a $1 billion fee for permanent board 
+    membership, G7 allies like France and the UK have expressed deep skepticism, warning 
+    of a "new colonialism" while Trump moves forward with his vision of transactional diplomacy.
+</p>
+                    <div class="actions">
+                        <button class="btn">Read More</button>
+                        <button class="btn">
+                            
+                            Bookmark
+                        </button>
+                    </div>
+                </div>
+                <br>
+            </section>
+            
+            <section class="news-grid" id="news-grid">
+                <!-- News items will be injected here by JS -->
+            </section>
+        </main>
+
+        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: var(--border-thick); text-align: center;">
+            <p class="text-mono">© 1899 Redemption News Company. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Populate News Grid
+        const grid = document.getElementById('news-grid');
+        newsData.slice(1).forEach(news => {
+            const card = document.createElement('article');
+            card.className = 'news-card';
+            card.innerHTML = `
+                <img src="${news.image}" alt="${news.title}">
+                <div class="meta">
+                    <span>${news.category}</span>
+                    <span>${news.date}</span>
+                </div>
+                <h3>${news.title}</h3>
+                <p>${news.summary}</p>
+                <button class="btn" style="margin-top: 1rem; font-size: 0.8rem;">Read</button>
+            `;
+            grid.appendChild(card);
+        });
+    </script>
+</body>
+</html>

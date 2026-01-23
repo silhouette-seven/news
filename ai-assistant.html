@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Redemption News</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <style>
+        .chat-container {
+            border: var(--border-thick);
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-history {
+            flex: 1;
+            padding: var(--spacing-md);
+            overflow-y: auto;
+            border-bottom: var(--border-thin);
+        }
+
+        .chat-input-area {
+            padding: var(--spacing-md);
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: var(--border-thin);
+            padding: var(--spacing-sm);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+        }
+
+        .message {
+            margin-bottom: var(--spacing-md);
+            max-width: 80%;
+        }
+
+        .message.user {
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.bot {
+            margin-right: auto;
+        }
+
+        .bubble {
+            display: inline-block;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 2px solid var(--text-ink);
+            background: var(--bg-paper);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        .audio-player {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border: var(--border-thick);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .waveform {
+            flex: 1;
+            height: 40px;
+            background: repeating-linear-gradient(90deg,
+                    var(--text-ink),
+                    var(--text-ink) 2px,
+                    transparent 2px,
+                    transparent 4px);
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>AI TELEGRAPH</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="feed.html">My Feed</a></li>
+                    <li><a href="ai-assistant.html" style="border-bottom-color: var(--text-ink);">AI Assistant</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div class="audio-player">
+                <button class="btn btn-icon" id="play-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Listen to Daily Briefing
+                </button>
+                <div class="waveform"></div>
+                <span class="text-mono">02:14</span>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-history" id="chat-history">
+                    <div class="message bot">
+                        <div class="bubble">
+                            Greetings. I am your automated news assistant. Ask me about current events in Blackwater or
+                            request a summary of the day's papers.
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" placeholder="Type your query here..." id="user-input">
+                    <button class="btn" onclick="sendMessage()">Send</button>
+                    <button class="btn btn-icon" title="Voice Input">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const history = document.getElementById('chat-history');
+
+            // User Message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.innerHTML = `<div class="bubble">${text}</div>`;
+            history.appendChild(userMsg);
+
+            input.value = '';
+            history.scrollTop = history.scrollHeight;
+
+            // Mock Bot Response
+            setTimeout(() => {
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot';
+                botMsg.innerHTML = `<div class="bubble">I am processing your request about "${text}". The telegraph lines are busy, please stand by...</div>`;
+                history.appendChild(botMsg);
+                history.scrollTop = history.scrollHeight;
+            }, 1000);
+        }
+
+        document.getElementById('play-btn').addEventListener('click', function () {
+            const icon = this.querySelector('svg path');
+            if (this.classList.contains('playing')) {
+                this.classList.remove('playing');
+                icon.setAttribute('d', 'M8 5v14l11-7z'); // Play icon
+            } else {
+                this.classList.add('playing');
+                icon.setAttribute('d', 'M6 4h4v16H6zm8 0h4v16h-4z'); // Pause icon
+            }
+        });
+    </script>
+</body>
+
+</html>

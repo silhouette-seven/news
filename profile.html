@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Redemption News</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <style>
+        .profile-card {
+            border: var(--border-thick);
+            padding: var(--spacing-lg);
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid var(--text-ink);
+            margin-bottom: var(--spacing-md);
+            object-fit: cover;
+            filter: sepia(0.5);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-family: var(--font-mono);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: var(--spacing-sm);
+            background: transparent;
+            border: var(--border-thin);
+            font-family: var(--font-body);
+            font-size: 1rem;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            cursor: pointer;
+        }
+
+        .toggle-box {
+            width: 40px;
+            height: 20px;
+            border: 2px solid var(--text-ink);
+            position: relative;
+        }
+
+        .toggle-box::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 12px;
+            height: 12px;
+            background: var(--text-ink);
+            transition: transform 0.2s;
+        }
+
+        .active .toggle-box::after {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>CITIZEN PROFILE</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="feed.html">My Feed</a></li>
+                    <li><a href="ai-assistant.html">AI Assistant</a></li>
+                    <li><a href="profile.html" style="border-bottom-color: var(--text-ink);">Profile</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div class="profile-card">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000&auto=format&fit=crop"
+                    alt="Profile" class="avatar">
+                <h2>Arthur Morgan</h2>
+                <p class="text-mono mb-2">Member since 1899</p>
+
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="form-control" value="Arthur Morgan">
+                </div>
+                <div class="form-group">
+                    <label>Preferred Region</label>
+                    <select class="form-control">
+                        <option>Salem</option>
+                        <option>Bengaluru</option>
+                        <option>Chennai</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Preferences</label>
+                    <div class="toggle-switch active" onclick="this.classList.toggle('active')">
+                        <div class="toggle-box"></div>
+                        <span>Enable Voice Narration</span>
+                    </div>
+                    <div class="toggle-switch" onclick="this.classList.toggle('active')" style="margin-top: 0.5rem;">
+                        <div class="toggle-box"></div>
+                        <span>High Contrast Mode</span>
+                    </div>
+                </div>
+
+                <button class="btn" style="margin-top: 2rem;">Save Changes</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>

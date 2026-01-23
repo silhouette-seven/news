@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Feed - Redemption News</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="top-bar">
+                <div id="current-date"></div>
+                <div class="location">Personalized Edition</div>
+            </div>
+            <h1>YOUR CHRONICLE</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="feed.html" style="border-bottom-color: var(--text-ink);">My Feed</a></li>
+                    <li><a href="ai-assistant.html">AI Assistant</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: var(--border-thin); padding-bottom: 1rem;">
+                <h2>Local Updates</h2>
+                <div class="location-selector">
+                    <label for="location" class="text-mono">Choose State:</label>
+                    <select id="location" class="btn" style="background: transparent;">
+                        <option>Chennai</option>
+                        <option>Bengaluru</option>
+                        <option>Mumbai</option>
+                        <option>Delhi</option>
+                        <option>Blackwater</option>
+                    </select>
+                </div>
+            </div>
+
+            <section class="news-grid" id="feed-grid">
+                <!-- Feed items injected here -->
+            </section>
+        </main>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        const feedGrid = document.getElementById('feed-grid');
+        // Shuffle and display all data for feed
+        [...newsData, ...newsData].forEach(news => {
+            const card = document.createElement('article');
+            card.className = 'news-card';
+            card.innerHTML = `
+                <div class="meta">
+                    <span>${news.location}</span>
+                    <span>${news.category}</span>
+                </div>
+                <h3>${news.title}</h3>
+                <p>${news.summary}</p>
+                <div style="margin-top: 1rem; border-top: 1px dashed var(--text-ink); padding-top: 0.5rem;">
+                    <small class="text-mono">Key Points:</small>
+                    <ul style="margin-left: 1.5rem; font-size: 0.9rem;">
+                        <li>Impact on local trade</li>
+                        <li>Public reaction mixed</li>
+                    </ul>
+                </div>
+            `;
+            feedGrid.appendChild(card);
+        });
+    </script>
+</body>
+
+</html>
