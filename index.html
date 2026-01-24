@@ -5,12 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Localizationews</title>
     <link rel="stylesheet" href="css/style.css">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+       
+    </style>
 </head>
 <body>
-    <div class="container">
+
+    <svg width="0" height="0" style="position: absolute;">
+        <filter id="paper-wrinkle">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise" />
+            
+            <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
+            
+            <feDiffuseLighting in="grayNoise" lighting-color="#f4e4bc" surfaceScale="2" result="texture">
+                <feDistantLight azimuth="45" elevation="60" />
+            </feDiffuseLighting>
+
+            <feRadialGradient id="vignetteGradient">
+                <stop offset="85%" stop-color="transparent" />
+                <stop offset="100%" stop-color="rgba(139, 69, 19, 0.3)" />
+            </feRadialGradient>
+            <feImage href="#vignetteGradient" result="vignette" />
+            
+            <feComposite in="texture" in2="vignette" operator="multiply" result="finalTexture" />
+        </filter>
+    </svg>
+
+    <div class="newspaper-container">
         <header>
             <div class="top-bar">
                 <div id="current-date">January 24 2026</div>
@@ -18,7 +44,6 @@
                 <div class="location">Salem, TamilNadu</div>
             </div>
             <h1>PLACEHOLDER</h1>
-            
             
             <nav>
                 <ul class="nav-links">
@@ -34,51 +59,46 @@
         <div class="marquee-container">
             <div class="marquee-content">
                 Trump’s "Board of Peace": US President Donald Trump has officially signed the charter for the "Board of Peace" at the World Economic Forum in Davos. The organization, which includes founding nations like Argentina, Egypt, Pakistan, and the UAE, aims to resolve international conflicts, specifically focusing on a Gaza ceasefire plan.
-
-The Greenland Dispute: Tensions eased slightly as President Trump ruled out using force to acquire Greenland, though he confirmed a "framework deal" with NATO regarding the island is in progress.
-
-Vietnam Leadership: Tô Lâm has been re-elected as General Secretary of the Communist Party of Vietnam, consolidating his position as the country's most powerful leader.
-
-Uganda Protests: Deadly protests have erupted in Uganda following disputed election results, with reports of at least 30 people killed and thousands arrested.
+                The Greenland Dispute: Tensions eased slightly as President Trump ruled out using force to acquire Greenland, though he confirmed a "framework deal" with NATO regarding the island is in progress.
+                Vietnam Leadership: Tô Lâm has been re-elected as General Secretary of the Communist Party of Vietnam, consolidating his position as the country's most powerful leader.
+                Uganda Protests: Deadly protests have erupted in Uganda following disputed election results, with reports of at least 30 people killed and thousands arrested.
             </div>
         </div>
-<br>
-<br>
+        
+        <br><br>
+
         <main>
             <section class="hero-section">
                 <div class="hero-image">
-                    <img src="./assets/Switzerland-Davos-Trump.webp" alt="Vintage Gang Photo">
+                    <img src="./assets/Switzerland-Davos-Trump.webp" alt="Vintage Gang Photo" style="transition: opacity 0.2s ease;">
+                    
+                    <div id="slide_controls">
+                        <div id="slide1" class="slide_button"></div>
+                        <div id="slide2" class="slide_button"></div>
+                        <div id="slide3" class="slide_button"></div>
+                        <div id="slide4" class="slide_button"></div>
+                    </div>
                 </div>
+
                 <div class="hero-content">
                     <div class="text-mono mb-1">Vol. 2026 • No. 1</div>
-<h2>Donald J. Trump: The "Board of Peace"</h2>
-<h3 class="mb-2">Who are the founding members of Trump’s new global order?</h3>
-<p class="mb-2">
-    In a historic and controversial ceremony in Davos, President Trump officially ratified the 
-    charter for his "Board of Peace." Claiming the organization will solve conflicts where the 
-    UN has failed, Trump has positioned himself as the permanent Chairman, joined by founding 
-    nations including Argentina, Egypt, Saudi Arabia, and the UAE.
-</p>
-<p class="mb-2">
-    The era of traditional multilateralism is under fire. As Trump pushes a "New Gaza" 
-    masterplan featuring Mediterranean skyscrapers and a $1 billion fee for permanent board 
-    membership, G7 allies like France and the UK have expressed deep skepticism, warning 
-    of a "new colonialism" while Trump moves forward with his vision of transactional diplomacy.
-</p>
-                    <div class="actions">
+                    <h2>Donald J. Trump: The "Board of Peace"</h2>
+                    <h3 class="mb-2">Who are the founding members of Trump’s new global order?</h3>
+                    <p class="mb-2">
+                        In a historic and controversial ceremony in Davos, President Trump officially ratified the 
+                        charter for his "Board of Peace." Claiming the organization will solve conflicts where the 
+                        UN has failed, Trump has positioned himself as the permanent Chairman.
+                    </p>
+                    <p class="mb-2"></p> <div class="actions">
                         <button class="btn">Read More</button>
-                        <button class="btn">
-                            
-                            Bookmark
-                        </button>
+                        <button class="btn">Bookmark</button>
                     </div>
                 </div>
                 <br>
             </section>
             
             <section class="news-grid" id="news-grid">
-                <!-- News items will be injected here by JS -->
-            </section>
+                </section>
         </main>
 
         <footer style="margin-top: 4rem; padding: 2rem 0; border-top: var(--border-thick); text-align: center;">
@@ -86,26 +106,144 @@ Uganda Protests: Deadly protests have erupted in Uganda following disputed elect
         </footer>
     </div>
 
-    <script src="js/data.js"></script>
-    <script src="js/main.js"></script>
     <script>
-        // Populate News Grid
-        const grid = document.getElementById('news-grid');
-        newsData.slice(1).forEach(news => {
-            const card = document.createElement('article');
-            card.className = 'news-card';
-            card.innerHTML = `
-                <img src="${news.image}" alt="${news.title}">
-                <div class="meta">
-                    <span>${news.category}</span>
-                    <span>${news.date}</span>
-                </div>
-                <h3>${news.title}</h3>
-                <p>${news.summary}</p>
-                <button class="btn" style="margin-top: 1rem; font-size: 0.8rem;">Read</button>
-            `;
-            grid.appendChild(card);
+        // --- 1. DATA SOURCE ---
+        const newsData = [
+          {
+            id: 1,
+            title: "Trump Unveils 'Board of Peace' Charter at Davos",
+            category: "Diplomacy",
+            author: "Donald J. Trump",
+            date: "Jan 23, 2026",
+            location: "Davos, Switzerland",
+            image: "./assets/Switzerland-Davos-Trump.webp", // Ensure this path is correct
+            summary: "Who are the founding members of Trump’s new global order?",
+            content: "President Trump signed the charter for the 'Board of Peace' today, joined by leaders from the UAE, Egypt, and Argentina. While some EU nations like Germany remain skeptical of its governance, the Board aims to bypass traditional UN gridlock to tackle high-stakes mediation."
+          },
+          {
+            id: 2,
+            title: "Indian Rupee Hits Record Low Amid Volatility",
+            category: "Economy",
+            author: "Shaktikanta Das",
+            date: "Jan 23, 2026",
+            location: "Mumbai, India",
+            image: "https://cdn.pixabay.com/photo/2019/08/09/17/56/rupee-4395523_1280.jpg",
+            summary: "Currency falls to 91.96 against USD as foreign outflows intensify.",
+            content: "The Indian currency posted its steepest weekly decline in six months. Market analysts point to heightened concerns surrounding new US trade tariffs and geopolitical tensions in the Arctic as the primary drivers for the sustained selling by foreign institutional investors."
+          },
+          {
+            id: 3,
+            title: "NVIDIA Declares the 'ChatGPT Moment' for Robotics",
+            category: "Technology",
+            author: "Jensen Huang",
+            date: "Jan 23, 2026",
+            location: "Las Vegas, USA",
+            image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1000&auto=format&fit=crop",
+            summary: "New physical AI models like 'Cosmos' bring human-like reasoning to robots.",
+            content: "Following CES 2026, the tech world is buzzing with the release of the GR00T N1.6 dedicated to humanoid robots. NVIDIA’s new architecture allows robots to perform complex chores, like folding laundry or navigating construction sites, using real-time inference."
+          },
+          {
+            id: 4,
+            title: "T20 World Cup Turmoil: Bangladesh Withdraws",
+            category: "Sports",
+            author: "ICC Media",
+            date: "Jan 23, 2026",
+            location: "New Delhi, India",
+            image: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=1000&auto=format&fit=crop",
+            summary: "Scotland expected to replace Bangladesh after BCB refuses to play.",
+            content: "The ICC has rejected Bangladesh's request to move their matches to a neutral venue. As the tournament approaches, the BCB has officially pulled out, sparking a massive debate about sports diplomacy and the upcoming February tournament co-hosted by India and Sri Lanka."
+          },
+        ];
+
+        // --- 2. SLIDESHOW LOGIC ---
+        
+        // Select DOM Elements
+        const heroImage = document.querySelector('.hero-image img');
+        const heroMeta = document.querySelector('.hero-content .text-mono');
+        const heroTitle = document.querySelector('.hero-content h2');
+        const heroSubtitle = document.querySelector('.hero-content h3');
+        const heroPars = document.querySelectorAll('.hero-content p');
+        let currentActiveSlideIndex = 0
+        const slideButtons = [
+            document.getElementById("slide1"),
+            document.getElementById("slide2"),
+            document.getElementById("slide3"),
+            document.getElementById("slide4")
+        ];
+        
+        function updateHero(index) {
+            // Safety check
+            if (!newsData[index]) return;
+            const data = newsData[index];
+
+            // A. Update Content
+            heroImage.src = data.image;
+            // Handle error if image fails to load
+            heroImage.onerror = function() { this.src = 'https://via.placeholder.com/800x400?text=No+Image'; };
+            
+            heroMeta.textContent = `${data.location} • ${data.date}`;
+            heroTitle.textContent = data.title;
+            heroSubtitle.textContent = data.summary;
+            
+            // Populate content (assuming first paragraph holds the main text)
+            if(heroPars[0]) heroPars[0].textContent = data.content;
+            if(heroPars[1]) heroPars[1].textContent = ""; 
+
+            // B. Update Buttons (Visual Feedback)
+            slideButtons.forEach((btn, i) => {
+                if(btn) {
+                    if (i === index) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            });
+        }
+
+        // Attach Click Listeners
+        slideButtons.forEach((button, index) => {
+            if(button) {
+                button.addEventListener('click', () => {
+                    updateHero(index);
+                });
+            }
         });
+        setInterval(() => {
+            if (currentActiveSlideIndex == 3){
+                currentActiveSlideIndex = 0;
+            }
+            else{
+                currentActiveSlideIndex += 1;
+            }
+            updateHero(currentActiveSlideIndex)
+
+        },10000);
+        // Initialize First Slide
+        updateHero(0);
+
+
+        // --- 3. POPULATE NEWS GRID ---
+        const grid = document.getElementById('news-grid');
+        if (grid && newsData.length > 0) {
+            // We skip the first item (slice(1)) because it is shown in the Hero section
+            newsData.slice(1).forEach(news => {
+                const card = document.createElement('article');
+                card.className = 'news-card';
+                card.innerHTML = `
+                    <img src="${news.image}" alt="${news.title}" onerror="this.src='https://via.placeholder.com/300'">
+                    <div class="meta">
+                        <span>${news.category}</span>
+                        <span>${news.date}</span>
+                    </div>
+                    <h3>${news.title}</h3>
+                    <p>${news.summary}</p>
+                    <button class="btn" style="margin-top: 1rem; font-size: 0.8rem;">Read</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
     </script>
 </body>
 </html>

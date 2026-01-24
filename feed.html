@@ -14,6 +14,26 @@
 </head>
 
 <body>
+    <svg width="0" height="0" style="position: absolute;">
+        <filter id="paper-wrinkle">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise" />
+            
+            <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
+            
+            <feDiffuseLighting in="grayNoise" lighting-color="#f4e4bc" surfaceScale="2" result="texture">
+                <feDistantLight azimuth="45" elevation="60" />
+            </feDiffuseLighting>
+
+            <feRadialGradient id="vignetteGradient">
+                <stop offset="85%" stop-color="transparent" />
+                <stop offset="100%" stop-color="rgba(139, 69, 19, 0.3)" />
+            </feRadialGradient>
+            <feImage href="#vignetteGradient" result="vignette" />
+            
+            <feComposite in="texture" in2="vignette" operator="multiply" result="finalTexture" />
+        </filter>
+    </svg>
+    <div class = "newspaper-container">
     <div class="container">
         <header>
             <div class="top-bar">
@@ -52,7 +72,7 @@
             </section>
         </main>
     </div>
-
+</div>
     <script src="js/data.js"></script>
     <script src="js/main.js"></script>
     <script>
@@ -79,6 +99,7 @@
             feedGrid.appendChild(card);
         });
     </script>
+
 </body>
 
 </html>
