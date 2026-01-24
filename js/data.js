@@ -21,7 +21,7 @@ const newsData = [
     date: "Jan 23, 2026",
     location: "Mumbai, India",
     image:
-      "https://images.unsplash.com/photo-1611974714013-3c8b0d2d3121?q=80&w=1000&auto=format&fit=crop",
+      "https://cdn.pixabay.com/photo/2019/08/09/17/56/rupee-4395523_1280.jpg",
     summary:
       "The Rupee fell to 91.96 against the USD as foreign outflows and trade uncertainties intensify.",
     content:
@@ -65,3 +65,4 @@ const categories = [
   "Health",
   "Entertainment",
 ];
+
