@@ -30,6 +30,46 @@ FALLBACK_IMAGES = {
         "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=600&auto=format&fit=crop",
     ],
+    "Politics": [
+        "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1555848962-6e79363ec58f?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1575320181282-9afab399332c?q=80&w=600&auto=format&fit=crop",
+    ],
+    "Entertainment": [
+        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=600&auto=format&fit=crop",
+    ],
+    "Science & Health": [
+        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1576086213369-97a306d36557?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=600&auto=format&fit=crop",
+    ],
+    "Environment": [
+        "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1466611653911-95081537e5b7?q=80&w=600&auto=format&fit=crop",
+    ],
+    "Israel-Iran War": [
+        "https://images.unsplash.com/photo-1580752300992-559f8e79ce98?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1573455494060-c5595004fb6c?q=80&w=600&auto=format&fit=crop",
+    ],
+    "Local News": [
+        "https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?q=80&w=600&auto=format&fit=crop",
+    ],
+    "Opinion": [
+        "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1504711434969-e33886168d6c?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=600&auto=format&fit=crop",
+    ],
     "default": [
         "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=600&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1504711434969-e33886168d6c?q=80&w=600&auto=format&fit=crop",
@@ -99,19 +139,29 @@ def index_view(request):
             "image": article.cover_image.url if article.cover_image else get_fallback_image(cat_name, i)
         })
 
-    # Category articles with unique fallback images
-    sports_articles = _annotate_articles(
-        NewsArticle.objects.filter(category__name__icontains="Sports").order_by('-published_date')[:6],
-        "Sports"
-    )
-    finance_articles = _annotate_articles(
-        NewsArticle.objects.filter(category__name__icontains="Finance").order_by('-published_date')[:6],
-        "Finance"
-    )
-    tech_articles = _annotate_articles(
-        NewsArticle.objects.filter(category__name__icontains="Tech").order_by('-published_date')[:6],
-        "Technology"
-    )
+    # Helper to build section data
+    def _get_section(category_filter, fallback_key, limit=6):
+        return _annotate_articles(
+            NewsArticle.objects.filter(category__name__icontains=category_filter).order_by('-published_date')[:limit],
+            fallback_key
+        )
+
+    # Build all sections — each is a dict with title, articles, and layout class
+    sections = [
+        {"title": "Trending: Israel-Iran War", "articles": _get_section("Israel-Iran", "Israel-Iran War"), "layout": "grid-feature-heavy", "accent": "#c0392b"},
+        {"title": "Sports", "articles": _get_section("Sports", "Sports"), "layout": "grid-guardian", "accent": "#8B4513"},
+        {"title": "Finance", "articles": _get_section("Finance", "Finance"), "layout": "grid-three-col", "accent": "#2c3e50"},
+        {"title": "Technology", "articles": _get_section("Tech", "Technology"), "layout": "grid-guardian", "accent": "#1a5276"},
+        {"title": "Politics", "articles": _get_section("Politics", "Politics"), "layout": "grid-feature-heavy", "accent": "#6c3483"},
+        {"title": "Entertainment", "articles": _get_section("Entertainment", "Entertainment"), "layout": "grid-masonry", "accent": "#d35400"},
+        {"title": "Science & Health", "articles": _get_section("Science", "Science & Health"), "layout": "grid-three-col", "accent": "#1abc9c"},
+        {"title": "Environment", "articles": _get_section("Environment", "Environment"), "layout": "grid-masonry", "accent": "#27ae60"},
+        {"title": "Local News", "articles": _get_section("Local", "Local News"), "layout": "grid-list-view", "accent": "#7f8c8d"},
+        {"title": "Opinion & Editorial", "articles": _get_section("Opinion", "Opinion"), "layout": "grid-list-view", "accent": "#34495e"},
+    ]
+
+    # Filter out sections with no articles
+    sections = [s for s in sections if s['articles']]
 
     context = {
         'date_str': date_str,
@@ -120,9 +170,7 @@ def index_view(request):
         'location_str': location_str,
         'hero_data': hero_list,
         'hero_articles': hero_qs,
-        'sports_articles': sports_articles,
-        'finance_articles': finance_articles,
-        'tech_articles': tech_articles,
+        'sections': sections,
     }
     return render(request, 'index.html', context)
 
@@ -132,15 +180,38 @@ def article_detail_view(request, article_id):
     cat_name = article.category.name if article.category else "default"
     fallback_image = get_fallback_image(cat_name, article.id)
 
+    # Record implicit READ interaction for authenticated users
+    if request.user.is_authenticated:
+        from users.models import UserInteraction, UserTagScore
+        # Only record one READ per user/article pair per session (avoid spamming)
+        if not UserInteraction.objects.filter(
+            user=request.user, article=article, interaction_type='READ'
+        ).exists():
+            UserInteraction.objects.create(
+                user=request.user, article=article, interaction_type='READ'
+            )
+        # Always bump tag scores (handles re-reads with lighter weight)
+        UserTagScore.bump_for_article(request.user, article, 'READ')
+
     # Split content into paragraphs for rich rendering
     paragraphs = [p.strip() for p in article.content.split('\n') if p.strip()]
     if len(paragraphs) <= 1:
         # If content is a single block, split by sentences for readability
         paragraphs = [article.content]
 
+    # Weather/date for base template
+    from datetime import datetime
+    date_str = datetime.now().strftime("%B %d %Y")
+    temp_f, weather_desc = get_weather_data()
+
     context = {
         'article': article,
         'fallback_image': fallback_image,
         'paragraphs': paragraphs,
+        'date_str': date_str,
+        'temp_f': temp_f,
+        'weather_desc': weather_desc,
+        'location_str': "Salem, TamilNadu",
     }
     return render(request, 'article.html', context)
+

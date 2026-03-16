@@ -1,105 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Feed - Redemption News</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
-        rel="stylesheet">
-</head>
+{% block title %}My Feed - Redemption News{% endblock %}
 
-<body>
-    <svg width="0" height="0" style="position: absolute;">
-        <filter id="paper-wrinkle">
-            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise" />
-            
-            <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
-            
-            <feDiffuseLighting in="grayNoise" lighting-color="#f4e4bc" surfaceScale="2" result="texture">
-                <feDistantLight azimuth="45" elevation="60" />
-            </feDiffuseLighting>
+{% block content %}
+<div class="feed-hero">
+    <h2>Your Personalized Feed</h2>
+    <p>Articles ranked by your reading interests</p>
 
-            <feRadialGradient id="vignetteGradient">
-                <stop offset="85%" stop-color="transparent" />
-                <stop offset="100%" stop-color="rgba(139, 69, 19, 0.3)" />
-            </feRadialGradient>
-            <feImage href="#vignetteGradient" result="vignette" />
-            
-            <feComposite in="texture" in2="vignette" operator="multiply" result="finalTexture" />
-        </filter>
-    </svg>
-    <div class = "newspaper-container">
-    <div class="container">
-        <header>
-            <div class="top-bar">
-                <div id="current-date"></div>
-                <div class="location">Personalized Edition</div>
-            </div>
-            <h1>YOUR CHRONICLE</h1>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="feed.html" style="border-bottom-color: var(--text-ink);">My Feed</a></li>
-                    <li><a href="ai-assistant.html">AI Assistant</a></li>
-                    <li><a href="profile.html">Profile</a></li>
-                </ul>
-            </nav>
-        </header>
-
-        <main>
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: var(--border-thin); padding-bottom: 1rem;">
-                <h2>Local Updates</h2>
-                <div class="location-selector">
-                    <label for="location" class="text-mono">Choose State:</label>
-                    <select id="location" class="btn" style="background: transparent;">
-                        <option>Chennai</option>
-                        <option>Bengaluru</option>
-                        <option>Mumbai</option>
-                        <option>Delhi</option>
-                        <option>Blackwater</option>
-                    </select>
-                </div>
-            </div>
-
-            <section class="news-grid" id="feed-grid">
-                <!-- Feed items injected here -->
-            </section>
-        </main>
+    {% if top_tag_scores %}
+    <div class="feed-tags">
+        {% for ts in top_tag_scores %}
+        <span class="feed-tag{% if forloop.counter <= 3 %} active{% endif %}">{{ ts.tag.name }} ({{ ts.score|floatformat:1 }})</span>
+        {% endfor %}
     </div>
+    {% endif %}
 </div>
-    <script src="js/data.js"></script>
-    <script src="js/main.js"></script>
-    <script>
-        const feedGrid = document.getElementById('feed-grid');
-        // Shuffle and display all data for feed
-        [...newsData, ...newsData].forEach(news => {
-            const card = document.createElement('article');
-            card.className = 'news-card';
-            card.innerHTML = `
-                <div class="meta">
-                    <span>${news.location}</span>
-                    <span>${news.category}</span>
-                </div>
-                <h3>${news.title}</h3>
-                <p>${news.summary}</p>
-                <div style="margin-top: 1rem; border-top: 1px dashed var(--text-ink); padding-top: 0.5rem;">
-                    <small class="text-mono">Key Points:</small>
-                    <ul style="margin-left: 1.5rem; font-size: 0.9rem;">
-                        <li>Impact on local trade</li>
-                        <li>Public reaction mixed</li>
-                    </ul>
-                </div>
-            `;
-            feedGrid.appendChild(card);
-        });
-    </script>
 
-</body>
-
-</html>
+{% if feed_articles %}
+<div class="grid-masonry">
+    {% for article in feed_articles %}
+    <a href="{% url 'article_detail' article.id %}" class="masonry-card">
+        <img src="{% if article.cover_image %}{{ article.cover_image.url }}{% else %}{{ article.fallback_image }}{% endif %}" alt="{{ article.title }}">
+        <div class="card-body">
+            <h4>{{ article.title }}</h4>
+            <p>{{ article.summary }}</p>
+            <div class="meta">{{ article.published_date|date:'M d, Y' }}</div>
+            <div class="relevance-score">Relevance: {{ article.relevance_score }}</div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="feed-empty">
+    <h3>No personalized articles yet</h3>
+    <p>Start reading articles on the <a href="{% url 'home' %}">homepage</a> to build your personalized feed.</p>
+    <p>The more you read, the smarter your feed becomes!</p>
+</div>
+{% endif %}
+{% endblock %}

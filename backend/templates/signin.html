@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - Redemption News{% endblock %}
+
+{% block extra_head %}
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: var(--spacing-lg);
+        border: var(--border-thick);
+        background: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        margin-top: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+    .auth-container h2 {
+        border: none;
+        margin-bottom: var(--spacing-md);
+    }
+    .auth-container p {
+        font-family: var(--font-mono);
+        color: #555;
+        margin-bottom: var(--spacing-lg);
+    }
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        text-align: left;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+    .form-group label {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+    .form-group input {
+        padding: 0.8rem;
+        border: var(--border-thin);
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        background: transparent;
+        transition: box-shadow 0.2s;
+    }
+    .form-group input:focus {
+        outline: none;
+        box-shadow: 2px 2px 0px var(--text-ink);
+    }
+    .auth-container .btn {
+        width: 100%;
+        margin-top: var(--spacing-sm);
+        padding: 0.8rem;
+    }
+    .auth-toggle {
+        margin-top: var(--spacing-lg);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+    }
+    .auth-toggle a {
+        font-weight: 700;
+        border-bottom: 1px solid var(--text-ink);
+    }
+    .error-msg {
+        color: #c4302b;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        margin-bottom: var(--spacing-sm);
+        border: 1px solid #c4302b;
+        padding: 0.5rem;
+        background: rgba(196, 48, 43, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div id="signin-section">
+        <h2>Sign In</h2>
+        <p>Access your personalized news feed.</p>
+        
+        {% if error_signin %}
+        <div class="error-msg">{{ error_signin }}</div>
+        {% endif %}
+        
+        <form class="auth-form" method="POST" action="{% url 'signin' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="signin">
+            
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn">Sign In</button>
+        </form>
+        
+        <div class="auth-toggle">
+            Don't have an account? <a href="#" id="show-signup">Sign up here</a>.
+        </div>
+    </div>
+    
+    <div id="signup-section" style="display:{% if error_signup %}block{% else %}none{% endif %};">
+        <h2>Create Account</h2>
+        <p>Join Redemption News today.</p>
+        
+        {% if error_signup %}
+        <div class="error-msg">{{ error_signup }}</div>
+        {% endif %}
+        
+        <form class="auth-form" method="POST" action="{% url 'signin' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="signup">
+            
+            <div class="form-group">
+                <label for="reg_username">Username</label>
+                <input type="text" id="reg_username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="reg_password">Password</label>
+                <input type="password" id="reg_password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn">Create Account</button>
+        </form>
+        
+        <div class="auth-toggle">
+            Already have an account? <a href="#" id="show-signin">Sign in</a>.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('show-signup').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('signin-section').style.display = 'none';
+        document.getElementById('signup-section').style.display = 'block';
+    });
+    
+    document.getElementById('show-signin').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('signup-section').style.display = 'none';
+        document.getElementById('signin-section').style.display = 'block';
+    });
+
+    {% if error_signup %}
+        document.getElementById('signin-section').style.display = 'none';
+        document.getElementById('signup-section').style.display = 'block';
+    {% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Redemption News{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <svg width="0" height="0" style="position: absolute;">
+        <filter id="paper-wrinkle">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise" />
+            <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
+            <feDiffuseLighting in="grayNoise" lighting-color="#ffffff" surfaceScale="2" result="texture">
+                <feDistantLight azimuth="45" elevation="60" />
+            </feDiffuseLighting>
+            <feRadialGradient id="vignetteGradient">
+                <stop offset="85%" stop-color="transparent" />
+                <stop offset="100%" stop-color="rgba(139, 69, 19, 0.2)" />
+            </feRadialGradient>
+            <feImage href="#vignetteGradient" result="vignette" />
+            <feComposite in="texture" in2="vignette" operator="multiply" result="finalTexture" />
+        </filter>
+    </svg>
+
+    {% if request.user.is_authenticated %}
+    <!-- ============== LOGGED-IN HEADER (Guardian-style) ============== -->
+    <div class="logged-in-header">
+        <div class="logged-in-header-inner">
+            <div class="header-brand">
+                <a href="{% url 'home' %}" class="brand-link">Redemption News</a>
+            </div>
+            <nav class="header-primary-nav">
+                <a href="{% url 'home' %}" class="pnav-link pnav-active">News</a>
+                <a href="{% url 'home' %}#opinion" class="pnav-link" style="border-bottom-color: #e05e00;">Opinion</a>
+                <a href="{% url 'home' %}#sports" class="pnav-link" style="border-bottom-color: #0084c6;">Sport</a>
+                <a href="{% url 'home' %}#technology" class="pnav-link" style="border-bottom-color: #bb3b80;">Tech</a>
+                <a href="{% url 'home' %}#entertainment" class="pnav-link" style="border-bottom-color: #a0522d;">Culture</a>
+                <a href="{% url 'feed' %}" class="pnav-link" style="border-bottom-color: #43853d;">My Feed</a>
+            </nav>
+            <div class="header-user-area">
+                <span class="user-greeting">Hi, {{ request.user.username }}</span>
+                <form action="{% url 'signout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="signout-btn">Sign Out</button>
+                </form>
+            </div>
+        </div>
+        {% if user_top_tags %}
+        <div class="header-sub-nav">
+            <div class="header-sub-nav-inner">
+                {% for ts in user_top_tags %}
+                <a href="{% url 'feed' %}?tag={{ ts.tag.name|urlencode }}" class="snav-link">{{ ts.tag.name }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div style="height: 12px;"></div>
+    {% endif %}
+
+    <div class="newspaper-container">
+        {% if not request.user.is_authenticated %}
+        <!-- ============== ANONYMOUS HEADER (Newspaper-style) ============== -->
+        <header>
+            <div class="top-bar">
+                <div id="current-date">{% block date_str %}{{ date_str }}{% endblock %}</div>
+                {% block top_bar_center %}
+                <div class="weather">{% if weather_desc %}{{ weather_desc }}, {{ temp_f }}°F{% else %}--°F{% endif %}</div>
+                {% endblock %}
+                <div class="location">
+                    {% block location_str %}{{ location_str|default:"Unknown Location" }}{% endblock %}
+                </div>
+            </div>
+            
+            <a href="{% url 'home' %}"><h1 style="color: var(--text-ink); border-bottom: 3px solid var(--text-ink); border-top: 3px solid var(--text-ink);">PLACEHOLDER</h1></a>
+            
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><a href="#">My Feed</a></li>
+                    <li><a href="#">AI Assistant</a></li>
+                    <li><a href="#">Profile</a></li>
+                    <li><a href="{% url 'signin' %}">Sign In</a></li>
+                </ul>
+            </nav>
+        </header>
+        {% else %}
+        <!-- Minimal header for logged-in users (brand is in the top fixed nav) -->
+        <header>
+            <div class="top-bar">
+                <div id="current-date">{% block date_str_auth %}{{ date_str }}{% endblock %}</div>
+                <div class="weather">{% if weather_desc %}{{ weather_desc }}, {{ temp_f }}°F{% else %}--°F{% endif %}</div>
+                <div class="location">{{ location_str|default:"Unknown Location" }}</div>
+            </div>
+            <a href="{% url 'home' %}"><h1 style="color: var(--text-ink); border-bottom: 3px solid var(--text-ink); border-top: 3px solid var(--text-ink);">PLACEHOLDER</h1></a>
+        </header>
+        {% endif %}
+
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: var(--border-thick); text-align: center;">
+            <p class="text-mono">© 1899 Redemption News Company. All Rights Reserved.</p>
+        </footer>
+    </div>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
