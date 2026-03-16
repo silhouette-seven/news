@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome Back - Redemption News</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="top-bar">
+                <div id="current-date"></div>
+                <div class="location">Signed In: Arthur Morgan</div>
+            </div>
+            <h1>WELCOME BACK!</h1>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="feed.html">My Feed</a></li>
+                    <li><a href="ai-assistant.html">AI Assistant</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                    <li><a href="index.html">Sign Out</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div class="mb-2">
+                <h2 style="font-size: 2rem;">Good Morning, Arthur.</h2>
+                <p class="text-mono">Here is your daily briefing from Blackwater and beyond.</p>
+            </div>
+
+            <section class="news-grid" id="news-grid">
+                <!-- News items will be injected here by JS -->
+            </section>
+        </main>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Populate News Grid with a mix for signed in user
+        const grid = document.getElementById('news-grid');
+        [...newsData].reverse().forEach(news => {
+            const card = document.createElement('article');
+            card.className = 'news-card';
+            card.innerHTML = `
+                <img src="${news.image}" alt="${news.title}">
+                <div class="meta">
+                    <span>${news.category}</span>
+                    <span>${news.date}</span>
+                </div>
+                <h3>${news.title}</h3>
+                <p>${news.summary}</p>
+                <div class="actions" style="margin-top: 1rem;">
+                    <button class="btn" style="font-size: 0.8rem;">Read</button>
+                    <button class="btn btn-icon" style="font-size: 0.8rem; border: none; box-shadow: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,254 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localization</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <svg width="0" height="0" style="position: absolute;">
+        <filter id="paper-wrinkle">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise" />
+            <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise" />
+            <feDiffuseLighting in="grayNoise" lighting-color="#f4e4bc" surfaceScale="2" result="texture">
+                <feDistantLight azimuth="45" elevation="60" />
+            </feDiffuseLighting>
+            <feRadialGradient id="vignetteGradient">
+                <stop offset="85%" stop-color="transparent" />
+                <stop offset="100%" stop-color="rgba(139, 69, 19, 0.3)" />
+            </feRadialGradient>
+            <feImage href="#vignetteGradient" result="vignette" />
+            <feComposite in="texture" in2="vignette" operator="multiply" result="finalTexture" />
+        </filter>
+    </svg>
+
+    <div class="newspaper-container">
+        <header>
+            <div class="top-bar">
+                <div id="current-date">{{ date_str }}</div>
+                <div class="weather">{% if weather_desc %}{{ weather_desc }}, {{ temp_f }}°F{% else %}--°F{% endif %}</div>
+                <div class="location">{{ location_str|default:"Unknown Location" }}</div>
+            </div>
+            <h1>PLACEHOLDER</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{% url 'home' %}">Home</a></li>
+                    <li><a href="feed.html">My Feed</a></li>
+                    <li><a href="ai-assistant.html">AI Assistant</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                    <li><a href="home-signed-in.html">Sign In</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="marquee-container">
+            <div class="marquee-content">
+                Trump's "Board of Peace": US President Donald Trump has officially signed the charter for the "Board of Peace" at the World Economic Forum in Davos. The organization, which includes founding nations like Argentina, Egypt, Pakistan, and the UAE, aims to resolve international conflicts, specifically focusing on a Gaza ceasefire plan.
+                The Greenland Dispute: Tensions eased slightly as President Trump ruled out using force to acquire Greenland, though he confirmed a "framework deal" with NATO regarding the island is in progress.
+                Vietnam Leadership: Tô Lâm has been re-elected as General Secretary of the Communist Party of Vietnam, consolidating his position as the country's most powerful leader.
+                Uganda Protests: Deadly protests have erupted in Uganda following disputed election results, with reports of at least 30 people killed and thousands arrested.
+            </div>
+        </div>
+        
+        <br><br>
+
+        <main>
+            <!-- ===================== HERO SECTION ===================== -->
+            <section class="hero-section">
+                {{ hero_data|json_script:"hero-data" }}
+
+                <div class="hero-image">
+                    <img src="https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1000&auto=format&fit=crop" alt="Hero Image" style="transition: opacity 0.2s ease;">
+                    <div id="slide_controls">
+                        {% for article in hero_articles %}
+                            <div id="slide{{ forloop.counter }}" class="slide_button"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="hero-content">
+                    <div class="text-mono mb-1">Vol. {% now "Y" %} • Top Story</div>
+                    <h2>Loading...</h2>
+                    <h3 class="mb-2"></h3>
+                    <p class="mb-2"></p>
+                    <p class="mb-2"></p>
+                    <div class="actions">
+                        <a id="hero-read-more" href="#"><button class="btn">Read More</button></a>
+                        <button class="btn">Bookmark</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===================== SPORTS SECTION ===================== -->
+            {% if sports_articles %}
+            <section class="news-section">
+                <h2 class="news-section-title">Sports</h2>
+                <div class="news-section-grid">
+                    {% for news in sports_articles %}
+                        {% if forloop.first %}
+                        <a href="{% url 'article_detail' news.id %}" class="featured-card">
+                            <span class="featured-tag">{{ news.category.name|default:"Sports" }}</span>
+                            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+                            <h3>{{ news.title }}</h3>
+                            <p>{{ news.summary }}</p>
+                            <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                        </a>
+                        <div class="sub-cards-column">
+                        {% else %}
+                        <a href="{% url 'article_detail' news.id %}" class="sub-card">
+                            <div class="sub-card-text">
+                                <div class="sub-tag">{{ news.category.name|default:"Sports" }}</div>
+                                <h4>{{ news.title }}</h4>
+                                <p>{{ news.summary }}</p>
+                                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                            </div>
+                            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+                        </a>
+                        {% endif %}
+                        {% if forloop.last %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- ===================== FINANCE SECTION ===================== -->
+            {% if finance_articles %}
+            <section class="news-section">
+                <h2 class="news-section-title">Finance</h2>
+                <div class="news-section-grid">
+                    {% for news in finance_articles %}
+                        {% if forloop.first %}
+                        <a href="{% url 'article_detail' news.id %}" class="featured-card">
+                            <span class="featured-tag">{{ news.category.name|default:"Finance" }}</span>
+                            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+                            <h3>{{ news.title }}</h3>
+                            <p>{{ news.summary }}</p>
+                            <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                        </a>
+                        <div class="sub-cards-column">
+                        {% else %}
+                        <a href="{% url 'article_detail' news.id %}" class="sub-card">
+                            <div class="sub-card-text">
+                                <div class="sub-tag">{{ news.category.name|default:"Finance" }}</div>
+                                <h4>{{ news.title }}</h4>
+                                <p>{{ news.summary }}</p>
+                                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                            </div>
+                            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+                        </a>
+                        {% endif %}
+                        {% if forloop.last %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- ===================== TECHNOLOGY SECTION ===================== -->
+            {% if tech_articles %}
+            <section class="news-section">
+                <h2 class="news-section-title">Technology</h2>
+                <div class="news-section-grid">
+                    {% for news in tech_articles %}
+                        {% if forloop.first %}
+                        <a href="{% url 'article_detail' news.id %}" class="featured-card">
+                            <span class="featured-tag">{{ news.category.name|default:"Technology" }}</span>
+                            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+                            <h3>{{ news.title }}</h3>
+                            <p>{{ news.summary }}</p>
+                            <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                        </a>
+                        <div class="sub-cards-column">
+                        {% else %}
+                        <a href="{% url 'article_detail' news.id %}" class="sub-card">
+                            <div class="sub-card-text">
+                                <div class="sub-tag">{{ news.category.name|default:"Technology" }}</div>
+                                <h4>{{ news.title }}</h4>
+                                <p>{{ news.summary }}</p>
+                                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                            </div>
+                            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+                        </a>
+                        {% endif %}
+                        {% if forloop.last %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+        </main>
+
+        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: var(--border-thick); text-align: center;">
+            <p class="text-mono">© 1899 Redemption News Company. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- SLIDESHOW LOGIC ---
+        let newsData = [];
+        try {
+            const dataElement = document.getElementById('hero-data');
+            if (dataElement) {
+                newsData = JSON.parse(dataElement.textContent);
+            }
+        } catch (e) {
+            console.error("Failed to parse hero data", e);
+        }
+
+        if (newsData.length > 0) {
+            const heroImage = document.querySelector('.hero-image img');
+            const heroMeta = document.querySelector('.hero-content .text-mono');
+            const heroTitle = document.querySelector('.hero-content h2');
+            const heroSubtitle = document.querySelector('.hero-content h3');
+            const heroPars = document.querySelectorAll('.hero-content p');
+            const heroReadMore = document.getElementById('hero-read-more');
+            let currentActiveSlideIndex = 0;
+            const slideButtons = Array.from(document.querySelectorAll('.slide_button'));
+            
+            function updateHero(index) {
+                if (!newsData[index]) return;
+                const data = newsData[index];
+
+                heroImage.src = data.image;
+                heroImage.onerror = function() { this.src = 'https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1000&auto=format&fit=crop'; };
+                
+                heroMeta.textContent = `${data.location} • ${data.date}`;
+                heroTitle.textContent = data.title;
+                heroSubtitle.textContent = data.summary;
+                
+                if(heroPars[0]) heroPars[0].textContent = data.content;
+                if(heroPars[1]) heroPars[1].textContent = "";
+
+                // Update Read More link
+                if(heroReadMore) heroReadMore.href = `/article/${data.id}/`;
+
+                slideButtons.forEach((btn, i) => {
+                    if(btn) btn.classList.toggle('active', i === index);
+                });
+            }
+
+            slideButtons.forEach((button, index) => {
+                if(button) button.addEventListener('click', () => updateHero(index));
+            });
+
+            setInterval(() => {
+                currentActiveSlideIndex = (currentActiveSlideIndex + 1) % newsData.length;
+                updateHero(currentActiveSlideIndex);
+            }, 10000);
+
+            updateHero(0);
+        }
+    </script>
+</body>
+</html>
