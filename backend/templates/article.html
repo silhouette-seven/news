@@ -89,6 +89,188 @@
         font-family: var(--font-mono);
         font-weight: 700;
     }
+
+    /* --- Ask AI Button --- */
+    .ask-ai-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 8px 18px;
+        background: var(--text-ink);
+        color: var(--bg-paper);
+        border: 2px solid var(--text-ink);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        box-shadow: 3px 3px 0px var(--accent-brown);
+        transition: all 0.2s;
+        margin-bottom: var(--spacing-lg);
+    }
+    .ask-ai-btn:hover {
+        transform: translate(1px, 1px);
+        box-shadow: 2px 2px 0px var(--accent-brown);
+    }
+    .ask-ai-btn .ai-icon {
+        font-size: 1.1rem;
+    }
+
+    /* --- AI Overlay --- */
+    .ai-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(26, 26, 26, 0.7);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+    .ai-overlay.active {
+        display: flex;
+    }
+    .ai-overlay-panel {
+        background: var(--bg-paper);
+        border: 3px solid var(--text-ink);
+        max-width: 650px;
+        width: 100%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 8px 8px 0px rgba(139, 69, 19, 0.3);
+        position: relative;
+    }
+    .ai-overlay-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: var(--border-thick);
+        background: var(--text-ink);
+        color: var(--bg-paper);
+    }
+    .ai-overlay-header h3 {
+        font-family: var(--font-headline);
+        font-size: 1.2rem;
+        border: none;
+        margin: 0;
+        color: var(--bg-paper);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .ai-overlay-close {
+        background: none;
+        border: 1px solid var(--accent-brown);
+        color: var(--bg-paper);
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 2px 10px;
+        font-family: var(--font-mono);
+        transition: background 0.2s;
+    }
+    .ai-overlay-close:hover {
+        background: var(--accent-brown);
+    }
+    .ai-overlay-body {
+        padding: 1.5rem;
+    }
+    .ai-overlay-article-info {
+        border: var(--border-thin);
+        padding: var(--spacing-sm) var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        background: var(--highlight);
+    }
+    .ai-overlay-article-info h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+    .ai-overlay-article-info p {
+        font-size: 0.8rem;
+        color: #555;
+    }
+    .ai-overlay-prompt-area {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+    }
+    .ai-overlay-prompt-input {
+        flex: 1;
+        padding: 0.7rem 1rem;
+        border: var(--border-thin);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        background: transparent;
+        transition: box-shadow 0.2s;
+    }
+    .ai-overlay-prompt-input:focus {
+        outline: none;
+        box-shadow: 3px 3px 0px var(--text-ink);
+    }
+    .ai-overlay-prompt-input::placeholder {
+        color: #999;
+    }
+    .ai-overlay-send-btn {
+        padding: 0.7rem 1.2rem;
+        background: var(--text-ink);
+        color: var(--bg-paper);
+        border: 2px solid var(--text-ink);
+        font-family: var(--font-mono);
+        font-weight: 700;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        transition: all 0.2s;
+        box-shadow: 3px 3px 0px var(--accent-brown);
+    }
+    .ai-overlay-send-btn:hover {
+        transform: translate(1px, 1px);
+        box-shadow: 2px 2px 0px var(--accent-brown);
+    }
+    .ai-overlay-send-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .ai-overlay-response {
+        border: var(--border-thin);
+        padding: var(--spacing-md);
+        min-height: 120px;
+        max-height: 35vh;
+        overflow-y: auto;
+        background: rgba(244, 228, 188, 0.3);
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+    .ai-overlay-response .ai-placeholder {
+        font-family: var(--font-mono);
+        color: #999;
+        font-size: 0.85rem;
+        text-align: center;
+        padding: var(--spacing-lg);
+    }
+    .ai-overlay-response .ai-text {
+        white-space: pre-wrap;
+    }
+    .ai-overlay-response .ai-error {
+        color: #c4302b;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        padding: var(--spacing-sm);
+        border: 1px solid #c4302b;
+        background: rgba(196, 48, 43, 0.08);
+    }
+    .ai-loading::after {
+        content: '...';
+        animation: aidots 1.5s steps(4, end) infinite;
+    }
+    @keyframes aidots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60%, 100% { content: '...'; }
+    }
 </style>
 {% endblock %}
 
@@ -98,13 +280,13 @@
 {% block content %}
 <div class="article-page-header">
     <a href="{% url 'home' %}">← Back to Headlines</a>
-    <span class="text-mono" style="font-size: 0.8rem; color: #888;">{{ article.published_date|date:'F d, Y' }}</span>
+    <span class="text-mono" style="font-size: 0.8rem; color: #888;">{% if is_personalized %}{{ article.created_at|date:'F d, Y' }}{% else %}{{ article.published_date|date:'F d, Y' }}{% endif %}</span>
 </div>
 
 <!-- Category & meta -->
 <div class="article-meta-bar">
-    <span class="category-badge">{{ article.category.name|default:"General" }}</span>
-    <span>Published {{ article.published_date|date:'M d, Y \a\t g:i A' }}</span>
+    <span class="category-badge">{% if is_personalized %}{{ article.topic }}{% else %}{{ article.category.name|default:"General" }}{% endif %}</span>
+    <span>{% if is_personalized %}Generated {{ article.created_at|date:'M d, Y \a\t g:i A' }}{% else %}Published {{ article.published_date|date:'M d, Y \a\t g:i A' }}{% endif %}</span>
 </div>
 
 <!-- Title -->
@@ -113,8 +295,17 @@
 <!-- Summary / Lead -->
 <p class="article-summary">{{ article.summary }}</p>
 
+<!-- Ask AI Button -->
+{% if request.user.is_authenticated %}
+<button class="ask-ai-btn" id="ask-ai-trigger">
+    <span class="ai-icon">✦</span> Ask AI About This Article
+</button>
+{% endif %}
+
 <!-- Cover Image -->
-{% if article.cover_image %}
+{% if is_personalized and article.cover_image_url %}
+<img class="article-cover" src="{{ article.cover_image_url }}" alt="{{ article.title }}">
+{% elif article.cover_image %}
 <img class="article-cover" src="{{ article.cover_image.url }}" alt="{{ article.title }}">
 {% elif fallback_image %}
 <img class="article-cover" src="{{ fallback_image }}" alt="{{ article.title }}">
@@ -131,9 +322,13 @@
 
 <!-- Article Body -->
 <div class="article-body">
-    {% for paragraph in paragraphs %}
-    <p>{{ paragraph }}</p>
-    {% endfor %}
+    {% if is_personalized %}
+        {{ article.content|linebreaks }}
+    {% else %}
+        {% for paragraph in paragraphs %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+    {% endif %}
 </div>
 
 <!-- Source -->
@@ -144,4 +339,120 @@
 {% endif %}
 
 <a href="{% url 'home' %}" class="back-link">← Return to Headlines</a>
+
+<!-- ============== AI OVERLAY ============== -->
+{% if request.user.is_authenticated %}
+<div class="ai-overlay" id="ai-overlay">
+    <div class="ai-overlay-panel">
+        <div class="ai-overlay-header">
+            <h3>✦ AI Assistant</h3>
+            <button class="ai-overlay-close" id="ai-overlay-close">✕</button>
+        </div>
+        <div class="ai-overlay-body">
+            <div class="ai-overlay-article-info">
+                <h4>{{ article.title }}</h4>
+                <p>{{ article.summary|truncatewords:30 }}</p>
+            </div>
+            <div class="ai-overlay-prompt-area">
+                <input type="text" class="ai-overlay-prompt-input" id="overlay-prompt"
+                       placeholder="Ask a question about this article..." autocomplete="off">
+                <button class="ai-overlay-send-btn" id="overlay-send">Ask</button>
+            </div>
+            <div class="ai-overlay-response" id="overlay-response">
+                <div class="ai-placeholder">AI response will appear here.</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if request.user.is_authenticated %}
+<script>
+(function() {
+    const trigger = document.getElementById('ask-ai-trigger');
+    const overlay = document.getElementById('ai-overlay');
+    const closeBtn = document.getElementById('ai-overlay-close');
+    const promptInput = document.getElementById('overlay-prompt');
+    const sendBtn = document.getElementById('overlay-send');
+    const responseArea = document.getElementById('overlay-response');
+    const articleId = {{ article.id }};
+
+    // Open overlay
+    trigger.addEventListener('click', function() {
+        overlay.classList.add('active');
+        promptInput.focus();
+    });
+
+    // Close overlay
+    closeBtn.addEventListener('click', function() {
+        overlay.classList.remove('active');
+    });
+
+    // Close on backdrop click
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.classList.remove('active');
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && overlay.classList.contains('active')) {
+            overlay.classList.remove('active');
+        }
+    });
+
+    // Send prompt
+    sendBtn.addEventListener('click', askAI);
+    promptInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') askAI();
+    });
+
+    function askAI() {
+        const prompt = promptInput.value.trim();
+        if (!prompt) return;
+
+        sendBtn.disabled = true;
+        responseArea.innerHTML = '<div class="ai-placeholder">Thinking<span class="ai-loading"></span></div>';
+
+        fetch('/ai-assistant/ask/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ article_id: articleId, prompt: prompt }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                responseArea.innerHTML = `<div class="ai-error">${data.error}</div>`;
+            } else {
+                responseArea.innerHTML = `<div class="ai-text">${data.response}</div>`;
+            }
+            sendBtn.disabled = false;
+        })
+        .catch(() => {
+            responseArea.innerHTML = '<div class="ai-error">Failed to get response. Please try again.</div>';
+            sendBtn.disabled = false;
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+})();
+</script>
+{% endif %}
 {% endblock %}

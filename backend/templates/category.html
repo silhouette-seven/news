@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ category_name }} — Redemption News{% endblock %}
+
+{% block content %}
+<section class="category-hero">
+    <h2 class="category-page-title">
+        <span class="accent-bar" style="background-color: {{ accent_color|default:'#8B4513' }};"></span>
+        {{ category_name }}
+    </h2>
+    <p class="category-subtitle text-mono">{{ articles|length }} article{{ articles|length|pluralize }} in this section</p>
+</section>
+
+{% if articles %}
+<div class="news-section-grid">
+    {% for news in articles %}
+    {% if forloop.first %}
+    <a href="{% url 'article_detail' news.id %}" class="featured-card">
+        <span class="featured-tag">{{ news.category.name }}</span>
+        <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+            alt="{{ news.title }}">
+        <h3>{{ news.title }}</h3>
+        <p>{{ news.summary }}</p>
+        <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+    </a>
+    <div class="sub-cards-column">
+    {% else %}
+        <a href="{% url 'article_detail' news.id %}" class="sub-card">
+            <div class="sub-card-text">
+                <div class="sub-tag">{{ news.category.name }}</div>
+                <h4>{{ news.title }}</h4>
+                <p>{{ news.summary }}</p>
+                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+            </div>
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                alt="{{ news.title }}">
+        </a>
+    {% endif %}
+    {% if forloop.last %}
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+{% if articles|length > 6 %}
+<div style="margin-top: 2rem; border-top: var(--border-thin); padding-top: 2rem;">
+    <h3 class="news-section-title" style="margin-bottom: 1rem;">More {{ category_name }}</h3>
+    <div class="grid-three-col">
+        {% for news in articles %}
+        {% if forloop.counter > 6 %}
+        <a href="{% url 'article_detail' news.id %}" class="three-col-card">
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                alt="{{ news.title }}">
+            <div class="card-body">
+                <h4>{{ news.title }}</h4>
+                <p>{{ news.summary }}</p>
+                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+            </div>
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="feed-empty">
+    <h3>No articles found</h3>
+    <p>There are no articles in this category yet. Check back later or explore the <a href="{% url 'home' %}">homepage</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -30,45 +30,52 @@
         </filter>
     </svg>
 
-    {% if request.user.is_authenticated %}
-    <!-- ============== LOGGED-IN HEADER (Guardian-style) ============== -->
-    <div class="logged-in-header">
-        <div class="logged-in-header-inner">
+    <!-- ============== UNIFIED NAV BAR (warm newspaper style) ============== -->
+    <div class="unified-nav">
+        <div class="unified-nav-inner">
             <div class="header-brand">
                 <a href="{% url 'home' %}" class="brand-link">Redemption News</a>
             </div>
             <nav class="header-primary-nav">
-                <a href="{% url 'home' %}" class="pnav-link pnav-active">News</a>
-                <a href="{% url 'home' %}#opinion" class="pnav-link" style="border-bottom-color: #e05e00;">Opinion</a>
-                <a href="{% url 'home' %}#sports" class="pnav-link" style="border-bottom-color: #0084c6;">Sport</a>
-                <a href="{% url 'home' %}#technology" class="pnav-link" style="border-bottom-color: #bb3b80;">Tech</a>
-                <a href="{% url 'home' %}#entertainment" class="pnav-link" style="border-bottom-color: #a0522d;">Culture</a>
-                <a href="{% url 'feed' %}" class="pnav-link" style="border-bottom-color: #43853d;">My Feed</a>
+                <a href="{% url 'home' %}" class="pnav-link {% block nav_home_active %}{% endblock %}">Home</a>
+                <a href="{% url 'feed' %}" class="pnav-link {% block nav_feed_active %}{% endblock %}">My Feed</a>
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'ai_assistant' %}" class="pnav-link {% block nav_ai_active %}{% endblock %}">AI Assistant</a>
+                <a href="{% url 'profile' %}" class="pnav-link {% block nav_profile_active %}{% endblock %}">My Profile</a>
+                {% endif %}
             </nav>
             <div class="header-user-area">
-                <span class="user-greeting">Hi, {{ request.user.username }}</span>
+                {% if request.user.is_authenticated %}
+                <span class="user-greeting">{{ request.user.username }}</span>
                 <form action="{% url 'signout' %}" method="post" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="signout-btn">Sign Out</button>
                 </form>
+                {% else %}
+                <a href="{% url 'signin' %}" class="signin-link">Sign In</a>
+                {% endif %}
             </div>
         </div>
-        {% if user_top_tags %}
-        <div class="header-sub-nav">
-            <div class="header-sub-nav-inner">
-                {% for ts in user_top_tags %}
-                <a href="{% url 'feed' %}?tag={{ ts.tag.name|urlencode }}" class="snav-link">{{ ts.tag.name }}</a>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
     </div>
-    <div style="height: 12px;"></div>
+
+    <!-- ============== SECTION NAV (shared on all pages) ============== -->
+    {% if nav_sections %}
+    <div class="section-nav" id="section-nav">
+        <div class="section-nav-inner">
+            {% for sec in nav_sections %}
+            <a href="{% url 'category_page' sec.slug %}"
+               class="section-nav-link{% if active_category_slug == sec.slug %} active{% endif %}"
+               data-section="section-{{ sec.slug }}"
+               style="--accent: {{ sec.accent }};">
+                {{ sec.title }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
     {% endif %}
 
     <div class="newspaper-container">
-        {% if not request.user.is_authenticated %}
-        <!-- ============== ANONYMOUS HEADER (Newspaper-style) ============== -->
+        <!-- ============== NEWSPAPER BANNER (all users) ============== -->
         <header>
             <div class="top-bar">
                 <div id="current-date">{% block date_str %}{{ date_str }}{% endblock %}</div>
@@ -81,28 +88,7 @@
             </div>
             
             <a href="{% url 'home' %}"><h1 style="color: var(--text-ink); border-bottom: 3px solid var(--text-ink); border-top: 3px solid var(--text-ink);">PLACEHOLDER</h1></a>
-            
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="#">My Feed</a></li>
-                    <li><a href="#">AI Assistant</a></li>
-                    <li><a href="#">Profile</a></li>
-                    <li><a href="{% url 'signin' %}">Sign In</a></li>
-                </ul>
-            </nav>
         </header>
-        {% else %}
-        <!-- Minimal header for logged-in users (brand is in the top fixed nav) -->
-        <header>
-            <div class="top-bar">
-                <div id="current-date">{% block date_str_auth %}{{ date_str }}{% endblock %}</div>
-                <div class="weather">{% if weather_desc %}{{ weather_desc }}, {{ temp_f }}°F{% else %}--°F{% endif %}</div>
-                <div class="location">{{ location_str|default:"Unknown Location" }}</div>
-            </div>
-            <a href="{% url 'home' %}"><h1 style="color: var(--text-ink); border-bottom: 3px solid var(--text-ink); border-top: 3px solid var(--text-ink);">PLACEHOLDER</h1></a>
-        </header>
-        {% endif %}
 
         <main>
             {% block content %}

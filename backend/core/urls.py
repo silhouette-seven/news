@@ -19,13 +19,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-from news.frontend_views import index_view, article_detail_view
+from news.frontend_views import index_view, article_detail_view, category_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/news/', include('news.urls')),
     path('', include('users.urls')),
     path('article/<int:article_id>/', article_detail_view, name='article_detail'),
+    path('category/<str:category_slug>/', category_view, name='category_page'),
     path('', index_view, name='home'),
 ]
 

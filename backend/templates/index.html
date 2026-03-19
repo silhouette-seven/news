@@ -1,13 +1,21 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block nav_home_active %}pnav-active{% endblock %}
+
+
 {% block content %}
 <div class="marquee-container">
     <div class="marquee-content">
-        Trump's "Board of Peace": US President Donald Trump has officially signed the charter for the "Board of Peace" at the World Economic Forum in Davos. The organization, which includes founding nations like Argentina, Egypt, Pakistan, and the UAE, aims to resolve international conflicts, specifically focusing on a Gaza ceasefire plan.
-        The Greenland Dispute: Tensions eased slightly as President Trump ruled out using force to acquire Greenland, though he confirmed a "framework deal" with NATO regarding the island is in progress.
-        Vietnam Leadership: Tô Lâm has been re-elected as General Secretary of the Communist Party of Vietnam, consolidating his position as the country's most powerful leader.
-        Uganda Protests: Deadly protests have erupted in Uganda following disputed election results, with reports of at least 30 people killed and thousands arrested.
+        Trump's "Board of Peace": US President Donald Trump has officially signed the charter for the "Board of Peace"
+        at the World Economic Forum in Davos. The organization, which includes founding nations like Argentina, Egypt,
+        Pakistan, and the UAE, aims to resolve international conflicts, specifically focusing on a Gaza ceasefire plan.
+        The Greenland Dispute: Tensions eased slightly as President Trump ruled out using force to acquire Greenland,
+        though he confirmed a "framework deal" with NATO regarding the island is in progress.
+        Vietnam Leadership: Tô Lâm has been re-elected as General Secretary of the Communist Party of Vietnam,
+        consolidating his position as the country's most powerful leader.
+        Uganda Protests: Deadly protests have erupted in Uganda following disputed election results, with reports of at
+        least 30 people killed and thousands arrested.
     </div>
 </div>
 
@@ -18,10 +26,11 @@
     {{ hero_data|json_script:"hero-data" }}
 
     <div class="hero-image">
-        <img src="https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1000&auto=format&fit=crop" alt="Hero Image" style="transition: opacity 0.2s ease;">
+        <img src="https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1000&auto=format&fit=crop"
+            alt="Hero Image" style="transition: opacity 0.2s ease;">
         <div id="slide_controls">
             {% for article in hero_articles %}
-                <div id="slide{{ forloop.counter }}" class="slide_button"></div>
+            <div id="slide{{ forloop.counter }}" class="slide_button"></div>
             {% endfor %}
         </div>
     </div>
@@ -39,27 +48,50 @@
     </div>
 </section>
 
+<!-- ===================== PERSONALIZED SECTION ===================== -->
+{% if personalized_articles %}
+<section class="news-section" id="section-personalized">
+    <h2 class="news-section-title">
+        <span class="accent-bar" style="background-color: #ffffff;"></span>
+        <a href="{% url 'feed' %}" class="section-title-link" style="color: #fff; text-decoration: underline;">Your Personalized News ✦</a>
+    </h2>
+    <div class="grid-three-col">
+        {% for news in personalized_articles|slice:":3" %}
+        <a href="{% url 'personalized_article' news.id %}" class="three-col-card">
+            <img src="{{ news.cover_image_url }}" alt="{{ news.title }}">
+            <div class="card-body">
+                <h4>{{ news.title }}</h4>
+                <p>{{ news.summary }}</p>
+                <div class="meta">{{ news.created_at|date:'M d, Y' }} &bull; {{ news.topic }}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
 <!-- ===================== DYNAMIC SECTIONS ===================== -->
 {% for section in sections %}
-<section class="news-section">
+<section class="news-section" id="section-{{ section.slug }}">
     <h2 class="news-section-title">
         <span class="accent-bar" style="background-color: {{ section.accent }};"></span>
-        {{ section.title }}
+        <a href="{% url 'category_page' section.slug %}" class="section-title-link">{{ section.title }}</a>
     </h2>
 
     {% if section.layout == "grid-guardian" %}
     <!-- LAYOUT: Guardian (Featured Left + Sub-cards Right) -->
     <div class="news-section-grid">
         {% for news in section.articles %}
-            {% if forloop.first %}
-            <a href="{% url 'article_detail' news.id %}" class="featured-card">
-                <span class="featured-tag">{{ news.category.name }}</span>
-                <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
-                <h3>{{ news.title }}</h3>
-                <p>{{ news.summary }}</p>
-                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
-            </a>
-            <div class="sub-cards-column">
+        {% if forloop.first %}
+        <a href="{% url 'article_detail' news.id %}" class="featured-card">
+            <span class="featured-tag">{{ news.category.name }}</span>
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                alt="{{ news.title }}">
+            <h3>{{ news.title }}</h3>
+            <p>{{ news.summary }}</p>
+            <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+        </a>
+        <div class="sub-cards-column">
             {% else %}
             <a href="{% url 'article_detail' news.id %}" class="sub-card">
                 <div class="sub-card-text">
@@ -68,12 +100,13 @@
                     <p>{{ news.summary }}</p>
                     <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
                 </div>
-                <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+                <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                    alt="{{ news.title }}">
             </a>
             {% endif %}
             {% if forloop.last %}
-            </div>
-            {% endif %}
+        </div>
+        {% endif %}
         {% endfor %}
     </div>
 
@@ -82,7 +115,8 @@
     <div class="grid-three-col">
         {% for news in section.articles %}
         <a href="{% url 'article_detail' news.id %}" class="three-col-card">
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                alt="{{ news.title }}">
             <div class="card-body">
                 <h4>{{ news.title }}</h4>
                 <p>{{ news.summary }}</p>
@@ -96,18 +130,20 @@
     <!-- LAYOUT: Feature-heavy (full-width hero + row of sub-cards) -->
     <div class="grid-feature-heavy">
         {% for news in section.articles %}
-            {% if forloop.first %}
-            <a href="{% url 'article_detail' news.id %}" class="feature-heavy-hero">
-                <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
-                <div class="card-body">
-                    <h3>{{ news.title }}</h3>
-                    <p>{{ news.summary }}</p>
-                </div>
-            </a>
-            <div class="feature-heavy-row">
+        {% if forloop.first %}
+        <a href="{% url 'article_detail' news.id %}" class="feature-heavy-hero">
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                alt="{{ news.title }}">
+            <div class="card-body">
+                <h3>{{ news.title }}</h3>
+                <p>{{ news.summary }}</p>
+            </div>
+        </a>
+        <div class="feature-heavy-row">
             {% else %}
             <a href="{% url 'article_detail' news.id %}" class="fh-card">
-                <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+                <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                    alt="{{ news.title }}">
                 <div>
                     <h4>{{ news.title }}</h4>
                     <p>{{ news.summary }}</p>
@@ -115,8 +151,8 @@
             </a>
             {% endif %}
             {% if forloop.last %}
-            </div>
-            {% endif %}
+        </div>
+        {% endif %}
         {% endfor %}
     </div>
 
@@ -125,7 +161,8 @@
     <div class="grid-masonry">
         {% for news in section.articles %}
         <a href="{% url 'article_detail' news.id %}" class="masonry-card">
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                alt="{{ news.title }}">
             <div class="card-body">
                 <h4>{{ news.title }}</h4>
                 <p>{{ news.summary }}</p>
@@ -145,7 +182,8 @@
                 <h4>{{ news.title }}</h4>
                 <p>{{ news.summary }}</p>
             </div>
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+                alt="{{ news.title }}">
         </a>
         {% endfor %}
     </div>
@@ -177,31 +215,31 @@
         const heroReadMore = document.getElementById('hero-read-more');
         let currentActiveSlideIndex = 0;
         const slideButtons = Array.from(document.querySelectorAll('.slide_button'));
-        
+
         function updateHero(index) {
             if (!newsData[index]) return;
             const data = newsData[index];
 
             heroImage.src = data.image;
-            heroImage.onerror = function() { this.src = 'https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1000&auto=format&fit=crop'; };
-            
+            heroImage.onerror = function () { this.src = 'https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1000&auto=format&fit=crop'; };
+
             heroMeta.textContent = `${data.location} • ${data.date}`;
             heroTitle.textContent = data.title;
             heroSubtitle.textContent = data.summary;
-            
-            if(heroPars[0]) heroPars[0].textContent = data.content;
-            if(heroPars[1]) heroPars[1].textContent = "";
+
+            if (heroPars[0]) heroPars[0].textContent = data.content;
+            if (heroPars[1]) heroPars[1].textContent = "";
 
             // Update Read More link
-            if(heroReadMore) heroReadMore.href = `/article/${data.id}/`;
+            if (heroReadMore) heroReadMore.href = `/article/${data.id}/`;
 
             slideButtons.forEach((btn, i) => {
-                if(btn) btn.classList.toggle('active', i === index);
+                if (btn) btn.classList.toggle('active', i === index);
             });
         }
 
         slideButtons.forEach((button, index) => {
-            if(button) button.addEventListener('click', () => updateHero(index));
+            if (button) button.addEventListener('click', () => updateHero(index));
         });
 
         setInterval(() => {
@@ -211,5 +249,43 @@
 
         updateHero(0);
     }
+
+    // --- SECTION NAV SCROLLSPY ---
+    (function () {
+        const sectionNav = document.getElementById('section-nav');
+        if (!sectionNav) return;
+
+        const navLinks = sectionNav.querySelectorAll('.section-nav-link');
+        const sections = [];
+
+        navLinks.forEach(link => {
+            const sectionId = link.getAttribute('data-section');
+            const sectionEl = document.getElementById(sectionId);
+            if (sectionEl) {
+                sections.push({ link, el: sectionEl });
+            }
+        });
+
+        if (sections.length === 0) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const matchedLink = sections.find(s => s.el === entry.target);
+                if (matchedLink) {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        matchedLink.link.classList.add('active');
+                        // Scroll the nav to show active link
+                        matchedLink.link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                }
+            });
+        }, {
+            rootMargin: '-20% 0px -60% 0px',
+            threshold: 0
+        });
+
+        sections.forEach(s => observer.observe(s.el));
+    })();
 </script>
 {% endblock %}

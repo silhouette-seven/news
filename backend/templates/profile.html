@@ -1,138 +1,278 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Redemption News</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
-        rel="stylesheet">
-    <style>
-        .profile-card {
-            border: var(--border-thick);
-            padding: var(--spacing-lg);
-            max-width: 600px;
-            margin: 0 auto;
-            text-align: center;
-        }
+{% block title %}My Profile — Redemption News{% endblock %}
+{% block nav_profile_active %}pnav-active{% endblock %}
 
-        .avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 4px solid var(--text-ink);
-            margin-bottom: var(--spacing-md);
-            object-fit: cover;
-            filter: sepia(0.5);
-        }
+{% block extra_head %}
+<style>
+    .profile-layout {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg) 0;
+        border-bottom: var(--border-thick);
+        margin-bottom: var(--spacing-lg);
+    }
+    .profile-avatar {
+        width: 90px;
+        height: 90px;
+        border: 3px solid var(--text-ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-headline);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--bg-paper);
+        background: var(--text-ink);
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .profile-info h2 {
+        font-size: 2rem;
+        border: none;
+        margin-bottom: 0.2rem;
+    }
+    .profile-info .join-date {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: #777;
+    }
+    .profile-stats {
+        display: flex;
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-sm);
+    }
+    .profile-stat {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--accent-brown);
+    }
+    .profile-stat strong {
+        font-size: 1.2rem;
+        color: var(--text-ink);
+        display: block;
+    }
 
-        .form-group {
-            margin-bottom: var(--spacing-md);
-            text-align: left;
-        }
+    /* Tag Interests */
+    .profile-section {
+        margin-bottom: var(--spacing-lg);
+    }
+    .profile-section h3 {
+        font-size: 1.3rem;
+        border-bottom: var(--border-thin);
+        padding-bottom: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+    }
+    .interest-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .interest-tag {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        padding: 5px 14px;
+        border: var(--border-thin);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: background-color 0.2s;
+    }
+    .interest-tag .tag-score {
+        font-size: 0.7rem;
+        color: #888;
+    }
+    .interest-tag:nth-child(-n+3) {
+        background: var(--text-ink);
+        color: var(--bg-paper);
+        border-color: var(--text-ink);
+    }
+    .interest-tag:nth-child(-n+3) .tag-score {
+        color: var(--accent-tan);
+    }
 
-        .form-group label {
-            display: block;
-            font-family: var(--font-mono);
-            margin-bottom: var(--spacing-sm);
-        }
+    /* Reading History */
+    .history-item {
+        display: flex;
+        gap: var(--spacing-md);
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: var(--border-thin);
+    }
+    .history-item:last-child {
+        border-bottom: none;
+    }
+    .history-type {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--accent-brown);
+        min-width: 50px;
+        flex-shrink: 0;
+    }
+    .history-item .history-text {
+        flex: 1;
+    }
+    .history-item .history-text h4 {
+        font-size: 0.95rem;
+        text-transform: none;
+        letter-spacing: normal;
+        margin-bottom: 0;
+    }
+    .history-item .history-text h4 a {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+    }
+    .history-item .history-text h4 a:hover {
+        border-bottom-color: var(--text-ink);
+    }
+    .history-time {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: #999;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .empty-section {
+        font-family: var(--font-mono);
+        color: #888;
+        font-size: 0.85rem;
+        padding: var(--spacing-md);
+        text-align: center;
+        border: 2px dashed var(--accent-tan);
+    }
+</style>
+{% endblock %}
 
-        .form-control {
-            width: 100%;
-            padding: var(--spacing-sm);
-            background: transparent;
-            border: var(--border-thin);
-            font-family: var(--font-body);
-            font-size: 1rem;
-        }
-
-        .toggle-switch {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-            cursor: pointer;
-        }
-
-        .toggle-box {
-            width: 40px;
-            height: 20px;
-            border: 2px solid var(--text-ink);
-            position: relative;
-        }
-
-        .toggle-box::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 12px;
-            height: 12px;
-            background: var(--text-ink);
-            transition: transform 0.2s;
-        }
-
-        .active .toggle-box::after {
-            transform: translateX(20px);
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <header>
-            <h1>CITIZEN PROFILE</h1>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="feed.html">My Feed</a></li>
-                    <li><a href="ai-assistant.html">AI Assistant</a></li>
-                    <li><a href="profile.html" style="border-bottom-color: var(--text-ink);">Profile</a></li>
-                </ul>
-            </nav>
-        </header>
-
-        <main>
-            <div class="profile-card">
-                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000&auto=format&fit=crop"
-                    alt="Profile" class="avatar">
-                <h2>Arthur Morgan</h2>
-                <p class="text-mono mb-2">Member since 1899</p>
-
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" class="form-control" value="Arthur Morgan">
+{% block content %}
+<div class="profile-layout">
+    <div class="profile-header">
+        <div class="profile-avatar">{{ request.user.username|first }}</div>
+        <div class="profile-info">
+            <h2>{{ request.user.username }}</h2>
+            <div class="join-date">Member since {{ request.user.date_joined|date:'F Y' }}</div>
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <strong>{{ total_reads }}</strong>
+                    Articles Read
                 </div>
-                <div class="form-group">
-                    <label>Preferred Region</label>
-                    <select class="form-control">
-                        <option>Salem</option>
-                        <option>Bengaluru</option>
-                        <option>Chennai</option>
-                    </select>
+                <div class="profile-stat">
+                    <strong>{{ top_tags|length }}</strong>
+                    Interests
                 </div>
-
-                <div class="form-group">
-                    <label>Preferences</label>
-                    <div class="toggle-switch active" onclick="this.classList.toggle('active')">
-                        <div class="toggle-box"></div>
-                        <span>Enable Voice Narration</span>
-                    </div>
-                    <div class="toggle-switch" onclick="this.classList.toggle('active')" style="margin-top: 0.5rem;">
-                        <div class="toggle-box"></div>
-                        <span>High Contrast Mode</span>
-                    </div>
-                </div>
-
-                <button class="btn" style="margin-top: 2rem;">Save Changes</button>
             </div>
-        </main>
+        </div>
     </div>
 
-    <script src="js/main.js"></script>
-</body>
+    <div class="profile-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border-thin); margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-sm);">
+            <h3 style="border: none; padding: 0; margin: 0;">Your Interests</h3>
+            <button id="edit-interests-btn" class="signout-btn" style="font-size: 0.75rem; padding: 4px 10px; cursor: pointer;">Edit</button>
+        </div>
+        
+        <div id="interests-display">
+            {% if top_tags %}
+            <div class="interest-tags">
+                {% for ts in top_tags %}
+                <span class="interest-tag">
+                    {{ ts.tag.name }}
+                    <span class="tag-score">{{ ts.score|floatformat:1 }}</span>
+                </span>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-section">
+                No interests yet. Start reading articles to build your profile!
+            </div>
+            {% endif %}
+        </div>
 
-</html>
+        <div id="interests-edit" style="display: none; padding-top: 1rem;">
+            <p class="text-mono" style="font-size: 0.8rem; margin-bottom: 0.5rem; color: #555;">Enter topics separated by commas (e.g., Technology, F1, Finance)</p>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <input type="text" id="interests-input" value="{{ top_tags_str }}" style="flex: 1; padding: 8px; font-family: var(--font-mono); border: 1px solid var(--text-ink);">
+                <button id="save-interests-btn" class="signout-btn" style="background: var(--text-ink); color: #fff; cursor: pointer;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-section">
+        <h3>Recent Activity</h3>
+        {% if recent_interactions %}
+        {% for interaction in recent_interactions %}
+        <div class="history-item">
+            <span class="history-type">{{ interaction.interaction_type }}</span>
+            <div class="history-text">
+                <h4><a href="{% url 'article_detail' interaction.article.id %}">{{ interaction.article.title }}</a></h4>
+            </div>
+            <span class="history-time">{{ interaction.timestamp|timesince }} ago</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-section">
+            No reading history yet. Explore the <a href="{% url 'home' %}">homepage</a> to get started!
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const editBtn = document.getElementById('edit-interests-btn');
+    const displayDiv = document.getElementById('interests-display');
+    const editDiv = document.getElementById('interests-edit');
+    const saveBtn = document.getElementById('save-interests-btn');
+    const input = document.getElementById('interests-input');
+
+    editBtn.addEventListener('click', () => {
+        if (editDiv.style.display === 'none') {
+            editDiv.style.display = 'block';
+            displayDiv.style.display = 'none';
+            editBtn.textContent = 'Cancel';
+        } else {
+            editDiv.style.display = 'none';
+            displayDiv.style.display = 'block';
+            editBtn.textContent = 'Edit';
+        }
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        const interests = input.value.trim();
+        if (!interests) return;
+        
+        saveBtn.textContent = 'Saving...';
+        saveBtn.disabled = true;
+        input.disabled = true;
+
+        try {
+            const resp = await fetch("{% url 'save_interests' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ tags: interests })
+            });
+            if (resp.ok) {
+                window.location.reload();
+            } else {
+                alert("Failed to save interests.");
+            }
+        } catch (e) {
+            alert("Error saving interests.");
+        } finally {
+            saveBtn.textContent = 'Save';
+            saveBtn.disabled = false;
+            input.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}

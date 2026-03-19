@@ -887,37 +887,40 @@ a.sub-card:hover {
 
 
 /* ================================================
-   LOGGED-IN HEADER (Guardian-style)
+   UNIFIED NAV BAR (monochromatic)
    ================================================ */
-.logged-in-header {
-    background-color: #1a2a44;
+.unified-nav {
+    background-color: #111;
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid #333;
 }
 
-.logged-in-header-inner {
+.unified-nav-inner {
     max-width: 1100px;
     margin: 0 auto;
     display: flex;
     align-items: center;
     padding: 0 2rem;
-    height: 50px;
+    height: 48px;
 }
 
 .header-brand .brand-link {
     font-family: var(--font-headline);
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 700;
-    color: #ffffff;
+    color: #fff;
     text-decoration: none;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     white-space: nowrap;
     border-bottom: none;
 }
 
 .header-brand .brand-link:hover {
+    color: #ccc;
     border-bottom: none;
 }
 
@@ -930,23 +933,26 @@ a.sub-card:hover {
 
 .pnav-link {
     font-family: var(--font-headline);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    color: #ffffff;
+    color: #aaa;
     text-decoration: none;
-    padding: 14px 16px;
+    padding: 14px 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     border-bottom: 3px solid transparent;
-    transition: border-color 0.2s, background-color 0.2s;
-    border-bottom: none;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
 }
 
 .pnav-link:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-bottom: none;
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-bottom: 3px solid #666;
 }
 
 .pnav-active {
-    border-bottom: 3px solid #c70000 !important;
+    color: #fff !important;
+    border-bottom: 3px solid #fff !important;
 }
 
 .header-user-area {
@@ -959,61 +965,52 @@ a.sub-card:hover {
 
 .user-greeting {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: #aab8c9;
+    font-size: 0.78rem;
+    color: #999;
+    letter-spacing: 0.03em;
 }
 
 .signout-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: #ffffff;
+    background: transparent;
+    border: 1px solid #555;
+    color: #ccc;
     font-family: var(--font-mono);
-    font-size: 0.78rem;
-    padding: 5px 14px;
+    font-size: 0.75rem;
+    padding: 4px 12px;
     cursor: pointer;
-    border-radius: 3px;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .signout-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: #fff;
+    color: #111;
 }
 
-/* Sub-nav: personalized tags */
-.header-sub-nav {
-    background-color: #122035;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.header-sub-nav-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: flex;
-    gap: 0;
-    overflow-x: auto;
-}
-
-.snav-link {
+.signin-link {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: #8fa4bf;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ccc;
     text-decoration: none;
-    padding: 8px 14px;
-    white-space: nowrap;
-    transition: color 0.2s, background-color 0.2s;
-    border-bottom: none;
+    padding: 5px 14px;
+    border: 1px solid #555;
+    transition: background-color 0.2s, color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #555;
 }
 
-.snav-link:hover {
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.06);
-    border-bottom: none;
+.signin-link:hover {
+    background-color: #fff;
+    color: #111;
+    border-bottom: 1px solid #fff;
 }
 
-/* Responsive logged-in header */
+/* Responsive unified nav */
 @media (max-width: 768px) {
-    .logged-in-header-inner {
+    .unified-nav-inner {
         flex-wrap: wrap;
         height: auto;
         padding: 8px 1rem;
@@ -1035,6 +1032,127 @@ a.sub-card:hover {
     .header-user-area {
         margin-left: auto;
     }
+}
+
+
+/* ================================================
+   SECTION NAV (scrollspy – homepage only)
+   ================================================ */
+.section-nav {
+    background-color: #1a1a1a;
+    border-top: 1px solid #333;
+    position: sticky;
+    top: 48px;
+    /* sit below unified nav (48px height) */
+    z-index: 999;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.section-nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #555 transparent;
+}
+
+.section-nav-inner::-webkit-scrollbar {
+    height: 3px;
+}
+
+.section-nav-inner::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.section-nav-inner::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 2px;
+}
+
+.section-nav-link {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: #999;
+    text-decoration: none;
+    padding: 9px 14px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: color 0.2s, background-color 0.2s, border-bottom-color 0.3s;
+    border-bottom: 3px solid transparent;
+    position: relative;
+}
+
+.section-nav-link:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 3px solid #666;
+}
+
+.section-nav-link.active {
+    color: #fff;
+    border-bottom-color: #fff;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Responsive section nav */
+@media (max-width: 768px) {
+    .section-nav {
+        top: auto;
+        /* don't stack on small screens */
+        position: relative;
+    }
+}
+
+
+/* ================================================
+   SECTION TITLE LINK (in-page category headings)
+   ================================================ */
+.section-title-link {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: none;
+    transition: color 0.2s;
+}
+
+.section-title-link:hover {
+    color: var(--accent-brown);
+    border-bottom: none;
+}
+
+
+/* ================================================
+   CATEGORY PAGE STYLES
+   ================================================ */
+.category-hero {
+    padding: var(--spacing-lg) 0;
+    border-bottom: var(--border-thick);
+    margin-bottom: var(--spacing-lg);
+}
+
+.category-page-title {
+    font-size: 2.5rem;
+    border: none;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.category-page-title .accent-bar {
+    width: 6px;
+    height: 1.6em;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.category-subtitle {
+    color: #777;
+    font-size: 0.9rem;
+    margin-left: 1rem;
 }
 
 

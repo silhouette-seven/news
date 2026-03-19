@@ -1,8 +1,14 @@
 import requests
 import json
+import re
 from datetime import datetime
 from django.shortcuts import render, get_object_or_404
+from django.http import Http404
 from .models import NewsArticle
+
+
+from django.utils.text import slugify
+from news.models import Category
 
 # A pool of unique, high-quality Unsplash images keyed by category
 FALLBACK_IMAGES = {
@@ -139,29 +145,33 @@ def index_view(request):
             "image": article.cover_image.url if article.cover_image else get_fallback_image(cat_name, i)
         })
 
-    # Helper to build section data
-    def _get_section(category_filter, fallback_key, limit=6):
-        return _annotate_articles(
-            NewsArticle.objects.filter(category__name__icontains=category_filter).order_by('-published_date')[:limit],
-            fallback_key
+    # Build sections dynamically based on database categories
+    sections = []
+    layouts = ["grid-feature-heavy", "grid-guardian", "grid-three-col", "grid-masonry"]
+    
+    for cat in Category.objects.all().order_by('name'):
+        articles = _annotate_articles(
+            NewsArticle.objects.filter(category=cat).order_by('-published_date')[:6],
+            cat.name
         )
+        if articles:
+            layout = layouts[cat.id % len(layouts)]
+            sections.append({
+                "title": cat.name,
+                "slug": slugify(cat.name),
+                "articles": articles,
+                "layout": layout,
+                "accent": "#ffffff",
+            })
 
-    # Build all sections — each is a dict with title, articles, and layout class
-    sections = [
-        {"title": "Trending: Israel-Iran War", "articles": _get_section("Israel-Iran", "Israel-Iran War"), "layout": "grid-feature-heavy", "accent": "#c0392b"},
-        {"title": "Sports", "articles": _get_section("Sports", "Sports"), "layout": "grid-guardian", "accent": "#8B4513"},
-        {"title": "Finance", "articles": _get_section("Finance", "Finance"), "layout": "grid-three-col", "accent": "#2c3e50"},
-        {"title": "Technology", "articles": _get_section("Tech", "Technology"), "layout": "grid-guardian", "accent": "#1a5276"},
-        {"title": "Politics", "articles": _get_section("Politics", "Politics"), "layout": "grid-feature-heavy", "accent": "#6c3483"},
-        {"title": "Entertainment", "articles": _get_section("Entertainment", "Entertainment"), "layout": "grid-masonry", "accent": "#d35400"},
-        {"title": "Science & Health", "articles": _get_section("Science", "Science & Health"), "layout": "grid-three-col", "accent": "#1abc9c"},
-        {"title": "Environment", "articles": _get_section("Environment", "Environment"), "layout": "grid-masonry", "accent": "#27ae60"},
-        {"title": "Local News", "articles": _get_section("Local", "Local News"), "layout": "grid-list-view", "accent": "#7f8c8d"},
-        {"title": "Opinion & Editorial", "articles": _get_section("Opinion", "Opinion"), "layout": "grid-list-view", "accent": "#34495e"},
-    ]
-
-    # Filter out sections with no articles
-    sections = [s for s in sections if s['articles']]
+    # Fetch personalized articles for logged-in users
+    personalized_articles = []
+    if request.user.is_authenticated:
+        from news.models import PersonalizedArticle
+        personalized_articles = PersonalizedArticle.objects.filter(
+            owner=request.user, 
+            is_archived=False
+        ).order_by('-created_at')[:5]
 
     context = {
         'date_str': date_str,
@@ -171,6 +181,7 @@ def index_view(request):
         'hero_data': hero_list,
         'hero_articles': hero_qs,
         'sections': sections,
+        'personalized_articles': personalized_articles,
     }
     return render(request, 'index.html', context)
 
@@ -215,3 +226,38 @@ def article_detail_view(request, article_id):
     }
     return render(request, 'article.html', context)
 
+
+def category_view(request, category_slug):
+    # Dynamically find the category matching the slug
+    section_cat = None
+    for cat in Category.objects.all():
+        if slugify(cat.name) == category_slug:
+            section_cat = cat
+            break
+
+    if section_cat is None:
+        raise Http404("Category not found")
+
+    # Fetch up to 20 articles for this category
+    articles = _annotate_articles(
+        NewsArticle.objects.filter(
+            category=section_cat
+        ).order_by('-published_date')[:20],
+        section_cat.name
+    )
+
+    # Weather/date for base template
+    date_str = datetime.now().strftime("%B %d %Y")
+    temp_f, weather_desc = get_weather_data()
+
+    context = {
+        'category_name': section_cat.name,
+        'accent_color': "#ffffff",
+        'active_category_slug': category_slug,
+        'articles': articles,
+        'date_str': date_str,
+        'temp_f': temp_f,
+        'weather_desc': weather_desc,
+        'location_str': "Salem, TamilNadu",
+    }
+    return render(request, 'category.html', context)

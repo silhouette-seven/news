@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Assistant — Redemption News{% endblock %}
+{% block nav_ai_active %}pnav-active{% endblock %}
+
+{% block extra_head %}
+<style>
+    .ai-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-lg);
+        min-height: 70vh;
+    }
+    @media (max-width: 768px) {
+        .ai-layout { grid-template-columns: 1fr; }
+    }
+
+    /* --- LEFT PANEL: Article Search --- */
+    .ai-search-panel {
+        border-right: var(--border-thin);
+        padding-right: var(--spacing-lg);
+    }
+    .ai-search-panel h2 {
+        font-size: 1.5rem;
+        border: none;
+        margin-bottom: var(--spacing-md);
+    }
+    .ai-search-input {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border: var(--border-thin);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        background: transparent;
+        transition: box-shadow 0.2s;
+        margin-bottom: var(--spacing-md);
+    }
+    .ai-search-input:focus {
+        outline: none;
+        box-shadow: 3px 3px 0px var(--text-ink);
+    }
+    .ai-search-input::placeholder {
+        color: #999;
+    }
+    .search-results {
+        max-height: 55vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent-brown) transparent;
+    }
+    .search-result-card {
+        display: flex;
+        gap: var(--spacing-sm);
+        align-items: flex-start;
+        padding: var(--spacing-sm) var(--spacing-sm);
+        border-bottom: var(--border-thin);
+        cursor: pointer;
+        transition: background-color 0.15s;
+    }
+    .search-result-card:hover {
+        background-color: var(--highlight);
+    }
+    .search-result-card.selected {
+        background-color: var(--accent-tan);
+        border-left: 4px solid var(--accent-brown);
+    }
+    .search-result-card img {
+        width: 70px;
+        height: 50px;
+        object-fit: cover;
+        filter: sepia(0.5);
+        border: var(--border-thin);
+        flex-shrink: 0;
+    }
+    .search-result-card .sr-text {
+        flex: 1;
+        min-width: 0;
+    }
+    .search-result-card .sr-text h4 {
+        font-size: 0.9rem;
+        line-height: 1.2;
+        margin-bottom: 0.1rem;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+    .search-result-card .sr-text p {
+        font-size: 0.75rem;
+        color: #666;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .search-result-card .sr-text .sr-meta {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        color: #999;
+        margin-top: 0.2rem;
+    }
+    .search-empty {
+        text-align: center;
+        padding: var(--spacing-lg);
+        font-family: var(--font-mono);
+        color: #888;
+        font-size: 0.85rem;
+    }
+
+    /* --- RIGHT PANEL: Chat --- */
+    .ai-chat-panel h2 {
+        font-size: 1.5rem;
+        border: none;
+        margin-bottom: var(--spacing-md);
+    }
+    .selected-article-preview {
+        border: var(--border-thin);
+        padding: var(--spacing-sm) var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        background: var(--highlight);
+    }
+    .selected-article-preview h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+    .selected-article-preview p {
+        font-size: 0.8rem;
+        color: #555;
+    }
+    .no-article-selected {
+        border: 2px dashed var(--accent-tan);
+        padding: var(--spacing-lg);
+        text-align: center;
+        font-family: var(--font-mono);
+        color: #888;
+        font-size: 0.85rem;
+        margin-bottom: var(--spacing-md);
+    }
+    .ai-prompt-area {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+    }
+    .ai-prompt-input {
+        flex: 1;
+        padding: 0.7rem 1rem;
+        border: var(--border-thin);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        background: transparent;
+        transition: box-shadow 0.2s;
+    }
+    .ai-prompt-input:focus {
+        outline: none;
+        box-shadow: 3px 3px 0px var(--text-ink);
+    }
+    .ai-prompt-input::placeholder {
+        color: #999;
+    }
+    .ai-prompt-input:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .ai-send-btn {
+        padding: 0.7rem 1.5rem;
+        background: var(--text-ink);
+        color: var(--bg-paper);
+        border: 2px solid var(--text-ink);
+        font-family: var(--font-mono);
+        font-weight: 700;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        transition: all 0.2s;
+        box-shadow: 3px 3px 0px var(--accent-brown);
+    }
+    .ai-send-btn:hover {
+        transform: translate(1px, 1px);
+        box-shadow: 2px 2px 0px var(--accent-brown);
+    }
+    .ai-send-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: 3px 3px 0px var(--accent-brown);
+    }
+    .ai-response-area {
+        border: var(--border-thin);
+        padding: var(--spacing-md);
+        min-height: 200px;
+        max-height: 45vh;
+        overflow-y: auto;
+        background: rgba(244, 228, 188, 0.3);
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+    .ai-response-area .response-placeholder {
+        font-family: var(--font-mono);
+        color: #999;
+        font-size: 0.85rem;
+        text-align: center;
+        padding: var(--spacing-lg);
+    }
+    .ai-response-area .response-text {
+        white-space: pre-wrap;
+    }
+    .ai-response-area .loading-dots::after {
+        content: '...';
+        animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60%, 100% { content: '...'; }
+    }
+    .ai-error {
+        color: #c4302b;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        padding: var(--spacing-sm);
+        border: 1px solid #c4302b;
+        background: rgba(196, 48, 43, 0.08);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ai-layout">
+    <!-- LEFT: Article Search -->
+    <div class="ai-search-panel">
+        <h2>Select an Article</h2>
+        <input type="text" class="ai-search-input" id="article-search"
+               placeholder="Search articles by title or keyword..." autocomplete="off">
+        <div class="search-results" id="search-results">
+            <div class="search-empty">Type to search for articles in the database.</div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Chat with Gemini -->
+    <div class="ai-chat-panel">
+        <h2>Ask About the Article</h2>
+
+        <div id="selected-article-area">
+            <div class="no-article-selected" id="no-article-msg">
+                ← Select an article from the left panel to begin.
+            </div>
+            <div class="selected-article-preview" id="selected-preview" style="display:none;">
+                <h4 id="selected-title"></h4>
+                <p id="selected-summary"></p>
+            </div>
+        </div>
+
+        <div class="ai-prompt-area">
+            <input type="text" class="ai-prompt-input" id="ai-prompt"
+                   placeholder="Ask a question about the selected article..."
+                   disabled autocomplete="off">
+            <button class="ai-send-btn" id="ai-send" disabled>Ask</button>
+        </div>
+
+        <div class="ai-response-area" id="ai-response">
+            <div class="response-placeholder">AI response will appear here.</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const searchInput = document.getElementById('article-search');
+    const resultsContainer = document.getElementById('search-results');
+    const promptInput = document.getElementById('ai-prompt');
+    const sendBtn = document.getElementById('ai-send');
+    const responseArea = document.getElementById('ai-response');
+    const noArticleMsg = document.getElementById('no-article-msg');
+    const selectedPreview = document.getElementById('selected-preview');
+    const selectedTitle = document.getElementById('selected-title');
+    const selectedSummary = document.getElementById('selected-summary');
+
+    let selectedArticleId = null;
+    let searchTimeout = null;
+
+    // --- Article Search (debounced) ---
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        if (query.length < 2) {
+            resultsContainer.innerHTML = '<div class="search-empty">Type at least 2 characters to search.</div>';
+            return;
+        }
+        searchTimeout = setTimeout(() => {
+            fetch(`/ai-assistant/search/?q=${encodeURIComponent(query)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        resultsContainer.innerHTML = '<div class="search-empty">No articles found.</div>';
+                        return;
+                    }
+                    resultsContainer.innerHTML = data.results.map(a => `
+                        <div class="search-result-card${a.id === selectedArticleId ? ' selected' : ''}"
+                             data-id="${a.id}" data-title="${a.title.replace(/"/g, '&quot;')}"
+                             data-summary="${a.summary.replace(/"/g, '&quot;')}">
+                            <img src="${a.image}" alt="">
+                            <div class="sr-text">
+                                <h4>${a.title}</h4>
+                                <p>${a.summary}</p>
+                                <div class="sr-meta">${a.category} · ${a.date}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                    attachCardListeners();
+                })
+                .catch(() => {
+                    resultsContainer.innerHTML = '<div class="search-empty ai-error">Search failed. Please try again.</div>';
+                });
+        }, 300);
+    });
+
+    function attachCardListeners() {
+        resultsContainer.querySelectorAll('.search-result-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Deselect previous
+                resultsContainer.querySelectorAll('.search-result-card').forEach(c => c.classList.remove('selected'));
+                // Select this
+                this.classList.add('selected');
+                selectedArticleId = parseInt(this.dataset.id);
+                selectedTitle.textContent = this.dataset.title;
+                selectedSummary.textContent = this.dataset.summary;
+                noArticleMsg.style.display = 'none';
+                selectedPreview.style.display = 'block';
+                promptInput.disabled = false;
+                sendBtn.disabled = false;
+                promptInput.focus();
+            });
+        });
+    }
+
+    // --- Ask Gemini ---
+    sendBtn.addEventListener('click', askGemini);
+    promptInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !sendBtn.disabled) askGemini();
+    });
+
+    function askGemini() {
+        const prompt = promptInput.value.trim();
+        if (!prompt || !selectedArticleId) return;
+
+        sendBtn.disabled = true;
+        promptInput.disabled = true;
+        responseArea.innerHTML = '<div class="response-placeholder">Thinking<span class="loading-dots"></span></div>';
+
+        fetch('/ai-assistant/ask/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                article_id: selectedArticleId,
+                prompt: prompt,
+            }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                responseArea.innerHTML = `<div class="ai-error">${data.error}</div>`;
+            } else {
+                responseArea.innerHTML = `<div class="response-text">${data.response}</div>`;
+            }
+            sendBtn.disabled = false;
+            promptInput.disabled = false;
+        })
+        .catch(() => {
+            responseArea.innerHTML = '<div class="ai-error">Failed to get response. Please try again.</div>';
+            sendBtn.disabled = false;
+            promptInput.disabled = false;
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+})();
+</script>
+{% endblock %}
