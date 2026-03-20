@@ -1010,6 +1010,7 @@ a.sub-card:hover {
     width: 100%;
     height: 180px;
     object-fit: cover;
+    background-color: #d6c4b0;
     filter: sepia(0.5) contrast(1.1);
     transition: filter 0.3s;
 }
@@ -1299,9 +1300,7 @@ a.sub-card:hover {
     padding: 0 2rem;
     display: flex;
     gap: 0;
-    overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #555 transparent;
+    flex-wrap: wrap;
 }
 
 .section-nav-inner::-webkit-scrollbar {
@@ -1463,4 +1462,306 @@ a.sub-card:hover {
     font-size: 0.7rem;
     color: #999;
     margin-top: 0.3rem;
+}
+
+
+/* ================================================
+   LAYOUT: FEED GRID (aligned 2-col for feed cards)
+   ================================================ */
+.grid-feed {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.grid-feed .masonry-card {
+    display: flex;
+    flex-direction: column;
+    border: var(--border-thin);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    color: inherit;
+    text-decoration: none;
+    break-inside: auto;
+}
+
+.grid-feed .masonry-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    border-bottom: none;
+}
+
+.grid-feed .masonry-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background-color: #d6c4b0;
+    filter: sepia(0.5) contrast(1.1);
+    transition: filter 0.3s;
+}
+
+.grid-feed .masonry-card:hover img {
+    filter: sepia(0) contrast(1);
+}
+
+.grid-feed .masonry-card .card-body {
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.grid-feed .masonry-card h4 {
+    font-size: 1rem;
+    line-height: 1.25;
+    margin-bottom: 0.3rem;
+    text-transform: none;
+    letter-spacing: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.5em;
+}
+
+.grid-feed .masonry-card p {
+    font-size: 0.85rem;
+    color: #555;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+.grid-feed .masonry-card .meta {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: #999;
+    margin-top: 0.4rem;
+}
+
+@media (max-width: 768px) {
+    .grid-feed {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* ================================================
+   SIDEBAR WIDGETS (wide screen layout)
+   ================================================ */
+.page-with-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.page-main-content {
+    min-width: 0;
+}
+
+.page-sidebar {
+    position: relative;
+}
+
+.sidebar-widgets {
+    position: sticky;
+    top: 110px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sidebar-widget {
+    border: var(--border-thin);
+    padding: var(--spacing-md);
+    background: #fff;
+}
+
+.sidebar-widget-title {
+    font-family: var(--font-headline);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: var(--border-thin);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.sidebar-widget-title .widget-icon {
+    font-size: 1.1rem;
+}
+
+/* Weather Widget */
+.weather-widget-body {
+    text-align: center;
+}
+
+.weather-widget-body .weather-temp {
+    font-family: var(--font-headline);
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.2rem;
+}
+
+.weather-widget-body .weather-desc {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.3rem;
+}
+
+.weather-widget-body .weather-location {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: #999;
+}
+
+/* Trending Widget */
+.trending-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.trending-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.trending-item:last-child {
+    border-bottom: none;
+}
+
+.trending-rank {
+    font-family: var(--font-headline);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ccc;
+    min-width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+
+.trending-item a {
+    font-size: 0.85rem;
+    line-height: 1.3;
+    color: var(--text-ink);
+    text-decoration: none;
+    border-bottom: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.trending-item a:hover {
+    color: var(--accent-brown);
+    border-bottom: none;
+}
+
+/* Quick Feed Widget */
+.quick-feed-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.quick-feed-item {
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.quick-feed-item:last-child {
+    border-bottom: none;
+}
+
+.quick-feed-item a {
+    font-size: 0.82rem;
+    line-height: 1.3;
+    color: var(--text-ink);
+    text-decoration: none;
+    border-bottom: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.quick-feed-item a:hover {
+    color: var(--accent-brown);
+    border-bottom: none;
+}
+
+.quick-feed-topic {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+/* Widget configuration toggle */
+.widget-config-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border: 2px dashed var(--accent-tan);
+    background: rgba(0,0,0,0.01);
+}
+
+.widget-config-bar label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    padding: 3px 8px;
+    border: 1px solid #ddd;
+    transition: background 0.2s;
+}
+
+.widget-config-bar label:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+.widget-config-bar input[type="checkbox"] {
+    accent-color: var(--text-ink);
+}
+
+@media (max-width: 900px) {
+    .page-with-sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    .page-sidebar {
+        order: -1;
+    }
+
+    .sidebar-widgets {
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 1rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .sidebar-widget {
+        min-width: 250px;
+        flex-shrink: 0;
+    }
 }

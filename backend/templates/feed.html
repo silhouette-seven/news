@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}My Feed - Redemption News{% endblock %}
+{% block nav_feed_active %}pnav-active{% endblock %}
 
 {% block content %}
 <div class="feed-hero">
@@ -22,63 +23,132 @@
     </div>
 </div>
 
-{% if personalized_articles %}
-<div class="grid-masonry" id="personalized-articles-grid" style="margin-top: 2rem;">
-    {% for article in personalized_articles %}
-    <a href="{% url 'personalized_article' article.id %}" class="masonry-card personalized-card">
-        <img src="{{ article.cover_image_url }}" alt="{{ article.title }}">
-        <div class="card-body">
-            <h4>{{ article.title }}</h4>
-            <p>{{ article.summary }}</p>
-            <div class="meta">{{ article.created_at|date:'M d, Y' }} &bull; AI Generated</div>
-            <div class="relevance-score" style="color: #666; font-size: 0.75rem;">Topic: {{ article.topic }}</div>
+<!-- Widget Configuration Bar -->
+<div class="widget-config-bar" id="widget-config">
+    <span style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; margin-right: 0.5rem;">⚙ Sidebar Widgets:</span>
+    <label><input type="checkbox" data-widget="weather-widget" checked> Weather</label>
+    <label><input type="checkbox" data-widget="trending-widget" checked> Trending</label>
+    <label><input type="checkbox" data-widget="feed-widget" checked> Quick Feed</label>
+</div>
+
+<div class="page-with-sidebar">
+    <!-- ============ MAIN CONTENT ============ -->
+    <div class="page-main-content">
+
+        {% if personalized_articles %}
+        <h3 style="font-size: 1.1rem; border-bottom: var(--border-thin); padding-bottom: 0.35rem; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">AI Generated For You</h3>
+        <div class="grid-feed" id="personalized-articles-grid" style="margin-bottom: 2rem;">
+            {% for article in personalized_articles %}
+            <a href="{% url 'personalized_article' article.id %}" class="masonry-card personalized-card">
+                <img src="{{ article.cover_image_url }}" alt="{{ article.title }}">
+                <div class="card-body">
+                    <h4>{{ article.title }}</h4>
+                    <p>{{ article.summary }}</p>
+                    <div class="meta">{{ article.created_at|date:'M d, Y' }} &bull; AI Generated</div>
+                    <div class="relevance-score" style="color: #666; font-size: 0.75rem;">Topic: {{ article.topic }}</div>
+                </div>
+            </a>
+            {% endfor %}
         </div>
-    </a>
-    {% endfor %}
-</div>
-{% else %}
-<div class="grid-masonry" id="personalized-articles-grid" style="margin-top: 2rem; display: none;">
-    <!-- Populated by JS -->
-</div>
-{% endif %}
+        {% else %}
+        <div class="grid-feed" id="personalized-articles-grid" style="margin-bottom: 2rem; display: none;">
+            <!-- Populated by JS -->
+        </div>
+        {% endif %}
 
-<hr style="margin: 4rem 0; border: none; border-top: 1px solid #ddd;">
+        <hr style="margin: 2rem 0; border: none; border-top: 1px solid #ddd;">
 
-<div class="feed-hero">
-    <h2>General Recommendations</h2>
-    <p>Articles from our database ranked by your reading interests.</p>
+        <div style="margin-bottom: 1rem;">
+            <h3 style="font-size: 1.1rem; border-bottom: var(--border-thin); padding-bottom: 0.35rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">General Recommendations</h3>
+            <p style="font-family: var(--font-mono); color: #666; font-size: 0.8rem;">Articles from our database ranked by your reading interests.</p>
 
-    {% if top_tag_scores %}
-    <div class="feed-tags">
-        {% for ts in top_tag_scores %}
-        <span class="feed-tag{% if forloop.counter <= 3 %} active{% endif %}">{{ ts.tag.name }} ({{
-            ts.score|floatformat:1 }})</span>
-        {% endfor %}
+            {% if top_tag_scores %}
+            <div class="feed-tags" style="justify-content: flex-start; margin-top: 0.5rem;">
+                {% for ts in top_tag_scores %}
+                <span class="feed-tag{% if forloop.counter <= 3 %} active{% endif %}">{{ ts.tag.name }} ({{ ts.score|floatformat:1 }})</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if feed_articles %}
+        <div class="grid-feed">
+            {% for article in feed_articles %}
+            <a href="{% url 'article_detail' article.id %}" class="masonry-card">
+                <img src="{% if article.cover_image %}{{ article.cover_image.url }}{% else %}{{ article.fallback_image }}{% endif %}"
+                    alt="{{ article.title }}">
+                <div class="card-body">
+                    <h4>{{ article.title }}</h4>
+                    <p>{{ article.summary }}</p>
+                    <div class="meta">{{ article.published_date|date:'M d, Y' }}</div>
+                    <div class="relevance-score">Relevance: {{ article.relevance_score }}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="feed-empty">
+            <h3>No recommendations available</h3>
+            <p>Start reading articles on the <a href="{% url 'home' %}">homepage</a> to build your recommended feed.</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
-</div>
 
-{% if feed_articles %}
-<div class="grid-masonry">
-    {% for article in feed_articles %}
-    <a href="{% url 'article_detail' article.id %}" class="masonry-card">
-        <img src="{% if article.cover_image %}{{ article.cover_image.url }}{% else %}{{ article.fallback_image }}{% endif %}"
-            alt="{{ article.title }}">
-        <div class="card-body">
-            <h4>{{ article.title }}</h4>
-            <p>{{ article.summary }}</p>
-            <div class="meta">{{ article.published_date|date:'M d, Y' }}</div>
-            <div class="relevance-score">Relevance: {{ article.relevance_score }}</div>
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="page-sidebar">
+        <div class="sidebar-widgets">
+
+            <!-- Weather Widget -->
+            <div class="sidebar-widget" id="weather-widget">
+                <div class="sidebar-widget-title">
+                    <span class="widget-icon">🌤</span> Weather
+                </div>
+                <div class="weather-widget-body">
+                    <div class="weather-temp">{% if temp_f %}{{ temp_f }}°F{% else %}--°F{% endif %}</div>
+                    <div class="weather-desc">{{ weather_desc|default:"N/A" }}</div>
+                    <div class="weather-location">{{ location_str|default:"Unknown" }}</div>
+                </div>
+            </div>
+
+            <!-- Trending News Widget -->
+            <div class="sidebar-widget" id="trending-widget">
+                <div class="sidebar-widget-title">
+                    <span class="widget-icon">🔥</span> Trending Now
+                </div>
+                <ul class="trending-list">
+                    {% for article in trending_articles %}
+                    <li class="trending-item">
+                        <span class="trending-rank">{{ forloop.counter }}</span>
+                        <a href="{% url 'article_detail' article.id %}">{{ article.title }}</a>
+                    </li>
+                    {% empty %}
+                    <li style="font-family: var(--font-mono); font-size: 0.8rem; color: #999;">No trending articles yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Quick Feed Widget -->
+            <div class="sidebar-widget" id="feed-widget">
+                <div class="sidebar-widget-title">
+                    <span class="widget-icon">✦</span> Your AI Articles
+                </div>
+                {% if personalized_articles %}
+                <ul class="quick-feed-list">
+                    {% for article in personalized_articles|slice:":5" %}
+                    <li class="quick-feed-item">
+                        <span class="quick-feed-topic">{{ article.topic }}</span>
+                        <a href="{% url 'personalized_article' article.id %}">{{ article.title }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p style="font-family: var(--font-mono); font-size: 0.8rem; color: #999;">Generate articles above to see them here.</p>
+                {% endif %}
+            </div>
+
         </div>
-    </a>
-    {% endfor %}
+    </aside>
 </div>
-{% else %}
-<div class="feed-empty">
-    <h3>No recommendations available</h3>
-    <p>Start reading articles on the <a href="{% url 'home' %}">homepage</a> to build your recommended feed.</p>
-</div>
-{% endif %}
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -88,6 +158,31 @@
         const articlesGrid = document.getElementById('personalized-articles-grid');
 
         const autoGenerate = {{ auto_generate|yesno:"true,false" }};
+
+    // Widget configuration: show/hide widgets and persist in localStorage
+    const widgetConfig = document.getElementById('widget-config');
+    if (widgetConfig) {
+        const checkboxes = widgetConfig.querySelectorAll('input[type="checkbox"]');
+        // Load saved preferences
+        checkboxes.forEach(cb => {
+            const widgetId = cb.getAttribute('data-widget');
+            const saved = localStorage.getItem('widget_' + widgetId);
+            if (saved === 'false') {
+                cb.checked = false;
+                const widget = document.getElementById(widgetId);
+                if (widget) widget.style.display = 'none';
+            }
+        });
+        // Toggle on change
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                const widgetId = cb.getAttribute('data-widget');
+                const widget = document.getElementById(widgetId);
+                if (widget) widget.style.display = cb.checked ? '' : 'none';
+                localStorage.setItem('widget_' + widgetId, cb.checked);
+            });
+        });
+    }
 
     function renderArticles(articles) {
         articlesGrid.innerHTML = '';
@@ -107,6 +202,21 @@
             articlesGrid.appendChild(card);
         });
         articlesGrid.style.display = '';
+
+        // Also update the quick-feed sidebar widget
+        const feedWidget = document.querySelector('#feed-widget .quick-feed-list, #feed-widget p');
+        if (feedWidget) {
+            let listHtml = '<ul class="quick-feed-list">';
+            articles.slice(0, 5).forEach(a => {
+                listHtml += `<li class="quick-feed-item"><span class="quick-feed-topic">${a.topic}</span><a href="${a.url}">${a.title}</a></li>`;
+            });
+            listHtml += '</ul>';
+            const container = document.getElementById('feed-widget');
+            const title = container.querySelector('.sidebar-widget-title');
+            container.innerHTML = '';
+            container.appendChild(title);
+            container.insertAdjacentHTML('beforeend', listHtml);
+        }
     }
 
     async function generateArticles() {

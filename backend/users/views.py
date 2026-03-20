@@ -59,7 +59,8 @@ def feed_view(request):
     """
     from datetime import datetime
     from django.utils import timezone
-    from news.frontend_views import get_weather_data, _annotate_articles
+    from django.db.models import Count
+    from news.frontend_views import get_weather_data, get_user_location, _annotate_articles
     from news.models import NewsArticle, PersonalizedArticle
     from users.models import UserTagScore
 
@@ -77,61 +78,77 @@ def feed_view(request):
     top_tag_scores = UserTagScore.get_top_tags(user, limit=15)
     top_tags_str = ", ".join([ts.tag.name for ts in top_tag_scores[:5]]) if top_tag_scores else "Latest News"
 
-    if top_tag_scores:
-        # Build a weighted query: articles matching the user's preferred tags or categories
-        top_tag_names = [ts.tag.name for ts in top_tag_scores]
-        tag_weights = {ts.tag.name: ts.score for ts in top_tag_scores}
+    # Ensure feed_articles is always populated
+    articles = list(
+        NewsArticle.objects.prefetch_related('tags', 'category')
+        .order_by('-published_date')[:100]
+    )
 
-        # Get articles that match any of the user's top tags OR categories
-        articles = (
-            NewsArticle.objects
-            .filter(Q(tags__name__in=top_tag_names) | Q(category__name__in=top_tag_names))
-            .distinct()
-            .prefetch_related('tags', 'category')
-            .order_by('-published_date')[:50]
-        )
+    tag_weights = {ts.tag.name: ts.score for ts in top_tag_scores} if top_tag_scores else {}
+    
+    scored_articles = []
+    # Max base score is 10.0, decr for older articles
+    for i, article in enumerate(articles):
+        base_score = 10.0 - (i * 0.1)
+        
+        article_tag_names = set(article.tags.values_list('name', flat=True))
+        if article.category:
+            article_tag_names.add(article.category.name)
+            
+        relevance = sum(tag_weights.get(name, 0) for name in article_tag_names)
+        
+        article.relevance_score = round(base_score + relevance, 1)
 
-        # Score each article by summing the user's tag scores for matching tags
-        scored_articles = []
-        for article in articles:
-            article_tag_names = set(article.tags.values_list('name', flat=True))
-            if article.category:
-                article_tag_names.add(article.category.name)
-                
-            relevance = sum(tag_weights.get(name, 0) for name in article_tag_names)
-            article.relevance_score = round(relevance, 1)
+        # Fallback image
+        cat_name = article.category.name if article.category else "default"
+        from news.frontend_views import get_fallback_image
+        if article.cover_image:
+            article.fallback_image = article.cover_image.url
+        else:
+            article.fallback_image = get_fallback_image(cat_name, article.id)
 
-            # Fallback image
-            cat_name = article.category.name if article.category else "default"
-            from news.frontend_views import get_fallback_image
-            if article.cover_image:
-                article.fallback_image = article.cover_image.url
-            else:
-                article.fallback_image = get_fallback_image(cat_name, article.id)
+        scored_articles.append(article)
 
-            scored_articles.append(article)
+    # Sort by relevance score (highest first), then by date (newest first)
+    scored_articles.sort(key=lambda a: (-a.relevance_score, -a.published_date.timestamp()))
+    feed_articles = scored_articles[:20]
 
-        # Sort by relevance score (highest first), then by date (newest first)
-        scored_articles.sort(key=lambda a: (-a.relevance_score, -a.published_date.timestamp()))
-        feed_articles = scored_articles[:20]
+    # Trending articles: most-read articles across the platform
+    trending_ids = (
+        UserInteraction.objects
+        .filter(interaction_type='READ')
+        .values('article')
+        .annotate(read_count=Count('id'))
+        .order_by('-read_count')[:8]
+    )
+    trending_article_ids = [item['article'] for item in trending_ids]
+    if trending_article_ids:
+        trending_articles = list(NewsArticle.objects.filter(id__in=trending_article_ids))
+        # Preserve the order from the query
+        id_to_article = {a.id: a for a in trending_articles}
+        trending_articles = [id_to_article[aid] for aid in trending_article_ids if aid in id_to_article]
     else:
-        feed_articles = []
+        # Fallback: latest articles if no interactions yet
+        trending_articles = list(NewsArticle.objects.order_by('-published_date')[:8])
 
-    # Context for base template
+    # Weather/location for sidebar widget
+    city, region, lat, lon = get_user_location(request)
+    location_str = f"{city}, {region}"
     date_str = datetime.now().strftime("%B %d %Y")
-    temp_f, weather_desc = get_weather_data()
+    temp_f, weather_desc = get_weather_data(latitude=lat, longitude=lon)
 
     context = {
         'date_str': date_str,
         'temp_f': temp_f,
         'weather_desc': weather_desc,
-        'location_str': "Salem, TamilNadu",
+        'location_str': location_str,
         'feed_articles': feed_articles,
         'top_tag_scores': top_tag_scores,
         'has_preferences': bool(top_tag_scores),
         'personalized_articles': personalized_articles,
         'auto_generate': auto_generate,
         'top_tags_str': top_tags_str,
+        'trending_articles': trending_articles,
     }
     return render(request, 'feed.html', context)
 
