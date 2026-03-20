@@ -86,11 +86,21 @@ class UserTagScore(models.Model):
     @classmethod
     def bump_for_article(cls, user, article, interaction_type):
         """Quick bump: add score for an article's tags without full recalculation."""
+        from news.models import Tag
         weight = cls.INTERACTION_WEIGHTS.get(interaction_type, 0)
-        for tag in article.tags.all():
+
+        # Collect tag names directly attached to the article
+        tag_names = set(article.tags.values_list('name', flat=True))
+        
+        # Also treat the article's category as an implicit tag
+        if getattr(article, 'category', None):
+            tag_names.add(article.category.name)
+
+        for t_name in tag_names:
+            tag_obj, _ = Tag.objects.get_or_create(name=t_name[:50])
             obj, created = cls.objects.get_or_create(
                 user=user,
-                tag=tag,
+                tag=tag_obj,
                 defaults={'score': max(weight, 0)}
             )
             if not created:

@@ -87,8 +87,7 @@
         const loadingIndicator = document.getElementById('loading-indicator');
         const articlesGrid = document.getElementById('personalized-articles-grid');
 
-        const autoGenerate = {{ auto_generate| yesno: "true,false"
-    }};
+        const autoGenerate = {{ auto_generate|yesno:"true,false" }};
 
     function renderArticles(articles) {
         articlesGrid.innerHTML = '';

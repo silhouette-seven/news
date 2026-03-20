@@ -172,18 +172,16 @@
         {% endfor %}
     </div>
 
-    {% elif section.layout == "grid-list-view" %}
-    <!-- LAYOUT: Compact list view -->
-    <div class="grid-list-view">
+    {% elif section.layout == "grid-compact-list" %}
+    <!-- LAYOUT: Compact list view for dense sections -->
+    <div class="grid-compact-list">
         {% for news in section.articles %}
-        <a href="{% url 'article_detail' news.id %}" class="list-card">
-            <span class="list-number">{{ forloop.counter }}</span>
-            <div class="list-text">
+        <a href="{% url 'article_detail' news.id %}" class="compact-list-card">
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+            <div class="text-content">
                 <h4>{{ news.title }}</h4>
-                <p>{{ news.summary }}</p>
+                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
             </div>
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
-                alt="{{ news.title }}">
         </a>
         {% endfor %}
     </div>

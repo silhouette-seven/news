@@ -90,6 +90,29 @@ def get_fallback_image(category_name, index):
     return pool[index % len(pool)]
 
 
+def get_user_location(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+        
+    if ip == '127.0.0.1' or ip == 'localhost':
+        # Default for local testing
+        return "Salem", "Tamil Nadu", 11.6643, 78.1460
+
+    try:
+        url = f"http://ip-api.com/json/{ip}"
+        res = requests.get(url, timeout=3)
+        if res.status_code == 200:
+            data = res.json()
+            if data['status'] == 'success':
+                return data['city'], data['regionName'], data['lat'], data['lon']
+    except Exception:
+        pass
+        
+    return "Salem", "Tamil Nadu", 11.6643, 78.1460
+
 def get_weather_data(latitude=11.6643, longitude=78.1460):
     url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true&temperature_unit=fahrenheit"
     try:
@@ -126,9 +149,10 @@ def _annotate_articles(queryset, category_name):
 
 
 def index_view(request):
-    date_str = datetime.now().strftime("%B %d %Y")
-    temp_f, weather_desc = get_weather_data()
-    location_str = "Salem, TamilNadu"
+    date_str = datetime.now().strftime("%B %d, %Y")
+    city, region, lat, lon = get_user_location(request)
+    location_str = f"{city}, {region}"
+    temp_f, weather_desc = get_weather_data(latitude=lat, longitude=lon)
 
     # Hero Articles
     hero_qs = NewsArticle.objects.all()[:4]
@@ -147,15 +171,45 @@ def index_view(request):
 
     # Build sections dynamically based on database categories
     sections = []
-    layouts = ["grid-feature-heavy", "grid-guardian", "grid-three-col", "grid-masonry"]
     
-    for cat in Category.objects.all().order_by('name'):
+    # User's prioritized categories
+    priority_order = [
+        "World", "US politics", "UK", "Climate crisis", "Middle East", 
+        "Ukraine", "Environment", "Science", "Global development", 
+        "Football", "Tech", "Business", "Obituaries", "Iran-Israel war"
+    ]
+    
+    # Assign specific layouts to ensure data density
+    # Fast moving/compact topics
+    compact_topics = ["Ukraine", "Iran-Israel war", "Middle East", "Science"]
+    
+    layouts_pool = ["grid-feature-heavy", "grid-guardian", "grid-three-col", "grid-masonry"]
+
+    # First fetch all non-empty categories
+    all_cats = list(Category.objects.all())
+    
+    # Sort categories: priority ones first (in order), then alphabetical
+    def sort_key(cat):
+        try:
+            return priority_order.index(cat.name)
+        except ValueError:
+            return len(priority_order) + 1
+            
+    all_cats.sort(key=lambda c: (sort_key(c), c.name))
+    
+    for idx, cat in enumerate(all_cats):
+        limit = 5 if cat.name in compact_topics else 6
         articles = _annotate_articles(
-            NewsArticle.objects.filter(category=cat).order_by('-published_date')[:6],
+            NewsArticle.objects.filter(category=cat).order_by('-published_date')[:limit],
             cat.name
         )
         if articles:
-            layout = layouts[cat.id % len(layouts)]
+            # Decide layout
+            if cat.name in compact_topics:
+                layout = "grid-compact-list"
+            else:
+                layout = layouts_pool[idx % len(layouts_pool)]
+                
             sections.append({
                 "title": cat.name,
                 "slug": slugify(cat.name),
@@ -163,6 +217,26 @@ def index_view(request):
                 "layout": layout,
                 "accent": "#ffffff",
             })
+
+    # Local News Injection
+    local_cat_name = f"Local News - {city}"
+    local_cat, _ = Category.objects.get_or_create(name=local_cat_name)
+    local_articles = NewsArticle.objects.filter(category=local_cat).order_by('-published_date')[:5]
+    
+    if not local_articles.exists():
+        import threading
+        from .breaking_news_task import generate_local_news
+        threading.Thread(target=generate_local_news, args=(city, region, local_cat)).start()
+        
+    local_annotated = _annotate_articles(local_articles, "Local News")
+    if local_annotated:
+        sections.insert(0, {
+            "title": local_cat_name,
+            "slug": slugify(local_cat_name),
+            "articles": local_annotated,
+            "layout": "grid-compact-list",
+            "accent": "#ff9900",
+        })
 
     # Fetch personalized articles for logged-in users
     personalized_articles = []
@@ -205,24 +279,34 @@ def article_detail_view(request, article_id):
         UserTagScore.bump_for_article(request.user, article, 'READ')
 
     # Split content into paragraphs for rich rendering
+    # Parse content
     paragraphs = [p.strip() for p in article.content.split('\n') if p.strip()]
     if len(paragraphs) <= 1:
-        # If content is a single block, split by sentences for readability
         paragraphs = [article.content]
+
+    # Similar Articles
+    if article.category:
+        similar_qs = NewsArticle.objects.filter(category=article.category).exclude(id=article.id).order_by('-published_date')[:3]
+        similar_articles = _annotate_articles(similar_qs, cat_name)
+    else:
+        similar_articles = []
 
     # Weather/date for base template
     from datetime import datetime
-    date_str = datetime.now().strftime("%B %d %Y")
-    temp_f, weather_desc = get_weather_data()
+    date_str = datetime.now().strftime("%B %d, %Y")
+    city, region, lat, lon = get_user_location(request)
+    location_str = f"{city}, {region}"
+    temp_f, weather_desc = get_weather_data(latitude=lat, longitude=lon)
 
     context = {
         'article': article,
         'fallback_image': fallback_image,
         'paragraphs': paragraphs,
+        'similar_articles': similar_articles,
         'date_str': date_str,
         'temp_f': temp_f,
         'weather_desc': weather_desc,
-        'location_str': "Salem, TamilNadu",
+        'location_str': location_str,
     }
     return render(request, 'article.html', context)
 
@@ -247,8 +331,10 @@ def category_view(request, category_slug):
     )
 
     # Weather/date for base template
-    date_str = datetime.now().strftime("%B %d %Y")
-    temp_f, weather_desc = get_weather_data()
+    date_str = datetime.now().strftime("%B %d, %Y")
+    city, region, lat, lon = get_user_location(request)
+    location_str = f"{city}, {region}"
+    temp_f, weather_desc = get_weather_data(latitude=lat, longitude=lon)
 
     context = {
         'category_name': section_cat.name,
@@ -258,6 +344,52 @@ def category_view(request, category_slug):
         'date_str': date_str,
         'temp_f': temp_f,
         'weather_desc': weather_desc,
-        'location_str': "Salem, TamilNadu",
+        'location_str': location_str,
     }
     return render(request, 'category.html', context)
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from users.models import UserInteraction, UserTagScore
+
+@login_required
+@require_POST
+def article_interact_view(request, article_id):
+    try:
+        data = json.loads(request.body)
+        action = data.get('action') # "LIKE" or "DISLIKE"
+        
+        if action not in ["LIKE", "DISLIKE"]:
+            return JsonResponse({"error": "Invalid action"}, status=400)
+            
+        article = get_object_or_404(NewsArticle, id=article_id)
+        interaction_type = "LIKED" if action == "LIKE" else "DISLIKED"
+        
+        # Check if they already liked/disliked
+        existing = UserInteraction.objects.filter(
+            user=request.user, 
+            article=article, 
+            interaction_type__in=['LIKED', 'DISLIKED']
+        ).first()
+        
+        if existing:
+            if existing.interaction_type == interaction_type:
+                # Toggle off
+                existing.delete()
+                return JsonResponse({"status": "removed", "action": action})
+            else:
+                # Switch vote
+                existing.interaction_type = interaction_type
+                existing.save()
+        else:
+            UserInteraction.objects.create(
+                user=request.user, article=article, interaction_type=interaction_type
+            )
+            
+        # Update tag scores
+        UserTagScore.bump_for_article(request.user, article, interaction_type)
+        return JsonResponse({"status": "added", "action": action})
+        
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

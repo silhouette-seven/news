@@ -338,6 +338,36 @@
 </p>
 {% endif %}
 
+<!-- Interaction Buttons -->
+{% if request.user.is_authenticated and not is_personalized %}
+<div class="article-interactions" style="margin-bottom: 3rem; display: flex; gap: 1rem;">
+    <button class="btn btn-like" data-action="LIKE" data-id="{{ article.id }}" style="background: transparent; border: 2px solid var(--text-ink); padding: 5px 15px; cursor: pointer; font-family: var(--font-mono); font-weight: bold;">
+        👍 Like
+    </button>
+    <button class="btn btn-dislike" data-action="DISLIKE" data-id="{{ article.id }}" style="background: transparent; border: 2px solid var(--text-ink); padding: 5px 15px; cursor: pointer; font-family: var(--font-mono); font-weight: bold;">
+        👎 Dislike
+    </button>
+</div>
+{% endif %}
+
+<!-- Similar Articles Section -->
+{% if similar_articles %}
+<div class="similar-articles" style="margin-top: 4rem; border-top: 4px solid var(--text-ink); padding-top: 2rem;">
+    <h3 style="font-family: var(--font-headline); font-size: 1.8rem; text-transform: uppercase; margin-bottom: 1.5rem;">Similar Articles</h3>
+    <div class="grid-three-col" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+        {% for sim in similar_articles %}
+        <a href="{% url 'article_detail' sim.id %}" class="three-col-card" style="text-decoration: none; color: inherit; display: block;">
+            <img src="{% if sim.cover_image %}{{ sim.cover_image.url }}{% else %}{{ sim.fallback_image }}{% endif %}" alt="{{ sim.title }}" style="width: 100%; height: 180px; object-fit: cover; filter: sepia(0.3) contrast(1.05); margin-bottom: 10px; border: 2px solid var(--text-ink);">
+            <div class="card-body">
+                <h4 style="font-size: 1.1rem; margin-bottom: 5px; font-family: var(--font-headline); line-height: 1.2;">{{ sim.title }}</h4>
+                <div class="meta" style="font-family: var(--font-mono); font-size: 0.75rem; color: #666;">{{ sim.published_date|date:'M d, Y' }}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <a href="{% url 'home' %}" class="back-link">← Return to Headlines</a>
 
 <!-- ============== AI OVERLAY ============== -->
@@ -452,6 +482,39 @@
         }
         return cookieValue;
     }
+
+    // Interaction logic
+    const interactButtons = document.querySelectorAll('.article-interactions .btn');
+    interactButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            const currentArticleId = this.getAttribute('data-id');
+            
+            fetch(`/article/${currentArticleId}/interact/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({ action: action }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'added' || data.status === 'removed') {
+                    // Quick UX feedback
+                    interactButtons.forEach(b => b.style.backgroundColor = 'transparent');
+                    interactButtons.forEach(b => b.style.color = 'var(--text-ink)');
+                    
+                    if (data.status === 'added') {
+                        this.style.backgroundColor = 'var(--text-ink)';
+                        this.style.color = 'white';
+                    }
+                }
+            })
+            .catch(err => console.error(err));
+        });
+    });
+
 })();
 </script>
 {% endif %}

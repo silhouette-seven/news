@@ -78,14 +78,14 @@ def feed_view(request):
     top_tags_str = ", ".join([ts.tag.name for ts in top_tag_scores[:5]]) if top_tag_scores else "Latest News"
 
     if top_tag_scores:
-        # Build a weighted query: articles matching the user's preferred tags
-        tag_ids = [ts.tag_id for ts in top_tag_scores]
-        tag_weights = {ts.tag_id: ts.score for ts in top_tag_scores}
+        # Build a weighted query: articles matching the user's preferred tags or categories
+        top_tag_names = [ts.tag.name for ts in top_tag_scores]
+        tag_weights = {ts.tag.name: ts.score for ts in top_tag_scores}
 
-        # Get articles that match any of the user's top tags
+        # Get articles that match any of the user's top tags OR categories
         articles = (
             NewsArticle.objects
-            .filter(tags__id__in=tag_ids)
+            .filter(Q(tags__name__in=top_tag_names) | Q(category__name__in=top_tag_names))
             .distinct()
             .prefetch_related('tags', 'category')
             .order_by('-published_date')[:50]
@@ -94,8 +94,11 @@ def feed_view(request):
         # Score each article by summing the user's tag scores for matching tags
         scored_articles = []
         for article in articles:
-            article_tag_ids = set(article.tags.values_list('id', flat=True))
-            relevance = sum(tag_weights.get(tid, 0) for tid in article_tag_ids)
+            article_tag_names = set(article.tags.values_list('name', flat=True))
+            if article.category:
+                article_tag_names.add(article.category.name)
+                
+            relevance = sum(tag_weights.get(name, 0) for name in article_tag_names)
             article.relevance_score = round(relevance, 1)
 
             # Fallback image
@@ -108,8 +111,8 @@ def feed_view(request):
 
             scored_articles.append(article)
 
-        # Sort by relevance score (highest first), then by date
-        scored_articles.sort(key=lambda a: (-a.relevance_score, a.published_date))
+        # Sort by relevance score (highest first), then by date (newest first)
+        scored_articles.sort(key=lambda a: (-a.relevance_score, -a.published_date.timestamp()))
         feed_articles = scored_articles[:20]
     else:
         feed_articles = []

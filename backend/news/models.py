@@ -48,3 +48,14 @@ class PersonalizedArticle(models.Model):
 
     def __str__(self):
         return f"{self.owner.username} - {self.title}"
+
+class BreakingNews(models.Model):
+    text = models.CharField(max_length=500)
+    article = models.ForeignKey(NewsArticle, on_delete=models.SET_NULL, null=True, blank=True, related_name='breaking_news_entries')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.text

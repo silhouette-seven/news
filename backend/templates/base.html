@@ -30,13 +30,42 @@
         </filter>
     </svg>
 
+    <!-- ============== MOBILE SIDEBAR OVERLAY ============== -->
+    <div id="mobile-sidebar-overlay" class="mobile-sidebar-overlay"></div>
+    <div id="mobile-sidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <span class="brand-link">Redemption</span>
+            <button id="mobile-sidebar-close" class="mobile-sidebar-close">&times;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'feed' %}">My Feed</a>
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'ai_assistant' %}">AI Assistant</a>
+            <a href="{% url 'profile' %}">My Profile</a>
+            <a href="#" onclick="document.getElementById('mobile_signout').submit(); return false;">Sign Out</a>
+            <form id="mobile_signout" action="{% url 'signout' %}" method="post" style="display: none;">{% csrf_token %}</form>
+            {% else %}
+            <a href="{% url 'signin' %}">Sign In</a>
+            {% endif %}
+            <hr>
+            <div style="padding: 1rem; color: #888; font-size: 0.8rem; text-transform: uppercase;">Topics</div>
+            {% if nav_sections %}
+            {% for sec in nav_sections %}
+            <a href="{% url 'category_page' sec.slug %}">{{ sec.title }}</a>
+            {% endfor %}
+            {% endif %}
+        </nav>
+    </div>
+
     <!-- ============== UNIFIED NAV BAR (warm newspaper style) ============== -->
     <div class="unified-nav">
         <div class="unified-nav-inner">
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menu">☰</button>
             <div class="header-brand">
                 <a href="{% url 'home' %}" class="brand-link">Redemption News</a>
             </div>
-            <nav class="header-primary-nav">
+            <nav class="header-primary-nav desktop-only">
                 <a href="{% url 'home' %}" class="pnav-link {% block nav_home_active %}{% endblock %}">Home</a>
                 <a href="{% url 'feed' %}" class="pnav-link {% block nav_feed_active %}{% endblock %}">My Feed</a>
                 {% if request.user.is_authenticated %}
@@ -44,7 +73,7 @@
                 <a href="{% url 'profile' %}" class="pnav-link {% block nav_profile_active %}{% endblock %}">My Profile</a>
                 {% endif %}
             </nav>
-            <div class="header-user-area">
+            <div class="header-user-area desktop-only">
                 {% if request.user.is_authenticated %}
                 <span class="user-greeting">{{ request.user.username }}</span>
                 <form action="{% url 'signout' %}" method="post" style="display: inline;">
@@ -60,9 +89,10 @@
 
     <!-- ============== SECTION NAV (shared on all pages) ============== -->
     {% if nav_sections %}
-    <div class="section-nav" id="section-nav">
+    <div class="section-nav desktop-only" id="section-nav">
         <div class="section-nav-inner">
-            {% for sec in nav_sections %}
+            <!-- Top 5 Priority Categories -->
+            {% for sec in nav_sections|slice:":5" %}
             <a href="{% url 'category_page' sec.slug %}"
                class="section-nav-link{% if active_category_slug == sec.slug %} active{% endif %}"
                data-section="section-{{ sec.slug }}"
@@ -70,6 +100,23 @@
                 {{ sec.title }}
             </a>
             {% endfor %}
+            
+            {% if nav_sections|length > 5 %}
+            <div class="more-topics-container">
+                <button id="more-topics-btn" class="more-topics-btn section-nav-link">More Topics ▾</button>
+                <div id="more-topics-drawer" class="more-topics-drawer">
+                    <div class="drawer-grid">
+                        {% for sec in nav_sections|slice:"5:" %}
+                        <a href="{% url 'category_page' sec.slug %}"
+                           class="drawer-link{% if active_category_slug == sec.slug %} active{% endif %}"
+                           style="--accent: {{ sec.accent }};">
+                            {{ sec.title }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     {% endif %}
@@ -88,6 +135,17 @@
             </div>
             
             <a href="{% url 'home' %}"><h1 style="color: var(--text-ink); border-bottom: 3px solid var(--text-ink); border-top: 3px solid var(--text-ink);">PLACEHOLDER</h1></a>
+            
+            {% if breaking_news and breaking_news.article %}
+            <div style="background-color: #c4302b; color: white; padding: 8px 15px; font-family: var(--font-mono); font-weight: bold; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1rem; border: 2px solid var(--text-ink); box-shadow: 4px 4px 0px var(--text-ink); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; flex: 1;">
+                    <span style="background: white; color: #c4302b; padding: 2px 6px; font-size: 0.75rem;">BREAKING</span>
+                    <marquee scrollamount="5" style="margin-left: 10px; width: 100%;">{{ breaking_news.text }}</marquee>
+                </div>
+                <a href="{% url 'article_detail' breaking_news.article.id %}" style="color: white; border-bottom: 1px solid white; white-space: nowrap; margin-left: 15px; font-size: 0.8rem;">Read Story &rarr;</a>
+            </div>
+            {% endif %}
+
         </header>
 
         <main>
@@ -101,5 +159,54 @@
     </div>
     
     {% block extra_js %}{% endblock %}
+    
+    <script>
+        // Desktop More Topics Toggle
+        const moreTopicsBtn = document.getElementById('more-topics-btn');
+        const moreTopicsDrawer = document.getElementById('more-topics-drawer');
+        if (moreTopicsBtn && moreTopicsDrawer) {
+            moreTopicsBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isExpanded = moreTopicsDrawer.classList.contains('expanded');
+                if (isExpanded) {
+                    moreTopicsDrawer.classList.remove('expanded');
+                    moreTopicsBtn.textContent = "More Topics ▾";
+                } else {
+                    moreTopicsDrawer.classList.add('expanded');
+                    moreTopicsBtn.textContent = "Close Topics ▴";
+                }
+            });
+            
+            // Close drawer when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!moreTopicsBtn.contains(e.target) && !moreTopicsDrawer.contains(e.target)) {
+                    moreTopicsDrawer.classList.remove('expanded');
+                    moreTopicsBtn.textContent = "More Topics ▾";
+                }
+            });
+        }
+
+        // Mobile Sidebar Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const mobileSidebarClose = document.getElementById('mobile-sidebar-close');
+        const mobileSidebarOverlay = document.getElementById('mobile-sidebar-overlay');
+
+        function openSidebar() {
+            mobileSidebar.classList.add('open');
+            mobileSidebarOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            mobileSidebar.classList.remove('open');
+            mobileSidebarOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openSidebar);
+        if (mobileSidebarClose) mobileSidebarClose.addEventListener('click', closeSidebar);
+        if (mobileSidebarOverlay) mobileSidebarOverlay.addEventListener('click', closeSidebar);
+    </script>
 </body>
 </html>

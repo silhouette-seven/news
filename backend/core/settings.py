@@ -73,6 +73,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'users.context_processors.user_tags_processor',
                 'news.context_processors.nav_sections_processor',
+                'news.context_processors.breaking_news_context',
             ],
         },
     },
