@@ -9,7 +9,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -43,6 +43,7 @@
             {% if request.user.is_authenticated %}
             <a href="{% url 'ai_assistant' %}">AI Assistant</a>
             <a href="{% url 'profile' %}">My Profile</a>
+            {% if request.user.is_staff %}<a href="{% url 'dashboard' %}" style="color:var(--highlight);">⚙ Dashboard</a>{% endif %}
             <a href="#" onclick="document.getElementById('mobile_signout').submit(); return false;">Sign Out</a>
             <form id="mobile_signout" action="{% url 'signout' %}" method="post" style="display: none;">{% csrf_token %}</form>
             {% else %}
@@ -71,6 +72,7 @@
                 {% if request.user.is_authenticated %}
                 <a href="{% url 'ai_assistant' %}" class="pnav-link {% block nav_ai_active %}{% endblock %}">AI Assistant</a>
                 <a href="{% url 'profile' %}" class="pnav-link {% block nav_profile_active %}{% endblock %}">My Profile</a>
+                {% if request.user.is_staff %}<a href="{% url 'dashboard' %}" class="pnav-link {% block nav_dash_active %}{% endblock %}">Dashboard</a>{% endif %}
                 {% endif %}
             </nav>
             <div class="header-user-area desktop-only">
@@ -95,7 +97,6 @@
             {% for sec in nav_sections|slice:":5" %}
             <a href="{% url 'category_page' sec.slug %}"
                class="section-nav-link{% if active_category_slug == sec.slug %} active{% endif %}"
-               data-section="section-{{ sec.slug }}"
                style="--accent: {{ sec.accent }};">
                 {{ sec.title }}
             </a>
@@ -153,8 +154,46 @@
             {% endblock %}
         </main>
 
-        <footer style="margin-top: 4rem; padding: 2rem 0; border-top: var(--border-thick); text-align: center;">
-            <p class="text-mono">© 1899 Redemption News Company. All Rights Reserved.</p>
+        <footer class="site-footer">
+            <div class="footer-inner">
+                <div class="footer-top">
+                    <div class="footer-brand">
+                        <span class="footer-brand-name">Redemption News</span>
+                        <p class="footer-tagline">Delivering reliable, verified news — powered by AI, grounded in truth.</p>
+                    </div>
+                    <div class="footer-nav">
+                        <h4 class="footer-heading">Navigation</h4>
+                        <a href="{% url 'home' %}">Home</a>
+                        <a href="{% url 'feed' %}">My Feed</a>
+                        {% if request.user.is_authenticated %}
+                        <a href="{% url 'ai_assistant' %}">AI Assistant</a>
+                        <a href="{% url 'profile' %}">My Profile</a>
+                        {% else %}
+                        <a href="{% url 'signin' %}">Sign In</a>
+                        {% endif %}
+                    </div>
+                    <div class="footer-topics">
+                        <h4 class="footer-heading">Topics</h4>
+                        {% if nav_sections %}
+                        {% for sec in nav_sections|slice:":6" %}
+                        <a href="{% url 'category_page' sec.slug %}">{{ sec.title }}</a>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p class="footer-copyright">&copy; {% now "Y" %} Redemption News Company. All Rights Reserved.</p>
+                    <div class="footer-links">
+                        <span>About</span>
+                        <span>&bull;</span>
+                        <span>Contact</span>
+                        <span>&bull;</span>
+                        <span>Privacy Policy</span>
+                        <span>&bull;</span>
+                        <span>Terms of Service</span>
+                    </div>
+                </div>
+            </div>
         </footer>
     </div>
     

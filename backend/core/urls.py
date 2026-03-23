@@ -20,6 +20,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from news.frontend_views import index_view, article_detail_view, category_view, article_interact_view
+from news.dashboard_views import (
+    dashboard_view, dashboard_delete_article, dashboard_edit_article,
+    dashboard_add_article, dashboard_generate_articles, dashboard_refine_article,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,6 +32,13 @@ urlpatterns = [
     path('article/<int:article_id>/', article_detail_view, name='article_detail'),
     path('article/<int:article_id>/interact/', article_interact_view, name='article_interact'),
     path('category/<str:category_slug>/', category_view, name='category_page'),
+    # Dashboard
+    path('dashboard/', dashboard_view, name='dashboard'),
+    path('dashboard/article/<int:article_id>/delete/', dashboard_delete_article, name='dashboard_delete_article'),
+    path('dashboard/article/<int:article_id>/edit/', dashboard_edit_article, name='dashboard_edit_article'),
+    path('dashboard/article/add/', dashboard_add_article, name='dashboard_add_article'),
+    path('dashboard/generate/', dashboard_generate_articles, name='dashboard_generate_articles'),
+    path('dashboard/refine/', dashboard_refine_article, name='dashboard_refine_article'),
     path('', index_view, name='home'),
 ]
 

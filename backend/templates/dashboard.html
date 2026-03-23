@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - Redemption News{% endblock %}
+
+{% block content %}
+<div class="dash">
+    <!-- Stats Bar -->
+    <div class="dash-stats">
+        <div class="dash-stat-card">
+            <div class="dash-stat-num">{{ total_articles }}</div>
+            <div class="dash-stat-label">Articles</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-num">{{ total_users }}</div>
+            <div class="dash-stat-label">Users</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-num">{{ total_categories }}</div>
+            <div class="dash-stat-label">Categories</div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="dash-tabs">
+        <button class="dash-tab active" data-tab="tab-articles">📰 Articles</button>
+        <button class="dash-tab" data-tab="tab-users">👤 Users</button>
+        <button class="dash-tab" data-tab="tab-generate">✦ Generate</button>
+        <button class="dash-tab" data-tab="tab-add">✎ Add / Edit</button>
+    </div>
+
+    <!-- ==================== ARTICLES TAB ==================== -->
+    <div class="dash-panel active" id="tab-articles">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 class="dash-panel-title">All Articles</h3>
+            <input type="text" id="article-search" placeholder="Search articles..." class="dash-search">
+        </div>
+        <div class="dash-table-wrap">
+            <table class="dash-table" id="articles-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px;">Image</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th>Source</th>
+                        <th style="width:120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for article in articles %}
+                    <tr data-id="{{ article.id }}">
+                        <td>
+                            {% if article.cover_image %}
+                            <img src="{{ article.cover_image.url }}" class="dash-thumb">
+                            {% else %}
+                            <div class="dash-thumb-placeholder">—</div>
+                            {% endif %}
+                        </td>
+                        <td class="dash-article-title">{{ article.title }}</td>
+                        <td>{{ article.category.name|default:"—" }}</td>
+                        <td class="text-mono" style="font-size:0.75rem;">{{ article.published_date|date:'M d, Y' }}</td>
+                        <td>
+                            {% if article.source_url %}
+                            <a href="{{ article.source_url }}" target="_blank" class="dash-source-link">Source ↗</a>
+                            {% else %}
+                            <span style="color:#999;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="dash-btn dash-btn-edit" onclick="loadArticleForEdit({{ article.id }})">Edit</button>
+                            <button class="dash-btn dash-btn-delete" onclick="deleteArticle({{ article.id }})">Del</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" style="text-align:center; color:#999;">No articles found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== USERS TAB ==================== -->
+    <div class="dash-panel" id="tab-users">
+        <h3 class="dash-panel-title">All Users</h3>
+        <div class="dash-table-wrap">
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Joined</th>
+                        <th>Staff</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td style="font-weight:700;">{{ u.username }}</td>
+                        <td>{{ u.email|default:"—" }}</td>
+                        <td class="text-mono" style="font-size:0.75rem;">{{ u.date_joined|date:'M d, Y' }}</td>
+                        <td>{% if u.is_staff %}<span class="dash-badge">Staff</span>{% else %}—{% endif %}</td>
+                        <td class="text-mono" style="font-size:0.75rem;">{{ u.last_login|date:'M d, Y H:i'|default:"Never" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" style="text-align:center; color:#999;">No users found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== GENERATE TAB ==================== -->
+    <div class="dash-panel" id="tab-generate">
+        <h3 class="dash-panel-title">Generate Articles with AI</h3>
+        <p style="font-family:var(--font-mono); font-size:0.8rem; color:#666; margin-bottom:1rem;">
+            Provide an editorial prompt. The AI will generate real, verifiable news articles based on your direction.
+        </p>
+        <div class="dash-form-group">
+            <label>Editorial Prompt</label>
+            <textarea id="gen-prompt" rows="4" class="dash-input" placeholder="e.g. Write articles about recent developments in quantum computing and AI regulation in the EU"></textarea>
+        </div>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <div class="dash-form-group" style="flex:1; min-width:200px;">
+                <label>Category</label>
+                <select id="gen-category" class="dash-input">
+                    <option value="">— Select Category —</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.name }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="dash-form-group" style="width:120px;">
+                <label>Count</label>
+                <select id="gen-count" class="dash-input">
+                    <option value="3">3</option>
+                    <option value="5" selected>5</option>
+                    <option value="7">7</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+        </div>
+        <button id="gen-btn" class="btn" style="margin-top:0.5rem;">✦ Generate Articles</button>
+        <div id="gen-loading" style="display:none; margin-top:1rem; font-family:var(--font-mono); color:#666;">
+            ⏳ Generating articles... This may take 15-30 seconds.
+        </div>
+        <div id="gen-results" style="margin-top:1.5rem;"></div>
+    </div>
+
+    <!-- ==================== ADD / EDIT TAB ==================== -->
+    <div class="dash-panel" id="tab-add">
+        <h3 class="dash-panel-title" id="form-title">Add New Article</h3>
+        <input type="hidden" id="edit-article-id" value="">
+
+        <div class="dash-form-group">
+            <label>Title *</label>
+            <input type="text" id="form-article-title" class="dash-input" placeholder="Article headline">
+        </div>
+        <div class="dash-form-group">
+            <label>Summary</label>
+            <textarea id="form-article-summary" rows="2" class="dash-input" placeholder="1-2 sentence summary"></textarea>
+        </div>
+        <div class="dash-form-group">
+            <label>Content</label>
+            <textarea id="form-article-content" rows="10" class="dash-input" placeholder="Full article text..."></textarea>
+        </div>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <div class="dash-form-group" style="flex:1; min-width:200px;">
+                <label>Category</label>
+                <select id="form-article-category" class="dash-input">
+                    <option value="">— Select Category —</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.name }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="dash-form-group" style="flex:1; min-width:200px;">
+                <label>Tags (comma-separated)</label>
+                <input type="text" id="form-article-tags" class="dash-input" placeholder="Tag1, Tag2, Tag3">
+            </div>
+        </div>
+        <div class="dash-form-group">
+            <label>Source URL</label>
+            <input type="text" id="form-article-source" class="dash-input" placeholder="https://...">
+        </div>
+        <div class="dash-form-group">
+            <label>Cover Image</label>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="file" id="form-article-image" accept="image/*" class="dash-input" style="flex:1;">
+                <label style="font-size:0.8rem;"><input type="checkbox" id="form-remove-image"> Remove existing</label>
+            </div>
+            <div id="form-current-image" style="margin-top:0.5rem;"></div>
+        </div>
+
+        <!-- AI Refine Section -->
+        <div class="dash-refine-section">
+            <div class="dash-form-group">
+                <label>AI Refinement Instructions</label>
+                <input type="text" id="refine-instruction" class="dash-input" placeholder="e.g. Make it more concise, improve flow, add a stronger conclusion" value="Polish and improve this article">
+            </div>
+            <button id="refine-btn" class="btn" style="background:#333; color:#fff;">🤖 Refine with AI</button>
+            <div id="refine-loading" style="display:none; margin-top:0.5rem; font-family:var(--font-mono); color:#666; font-size:0.8rem;">
+                ⏳ AI is refining your article...
+            </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+            <button id="save-article-btn" class="btn">💾 Save Article</button>
+            <button id="reset-form-btn" class="btn" style="background:transparent;" onclick="resetArticleForm()">Reset</button>
+        </div>
+        <div id="form-status" style="margin-top:0.75rem; font-family:var(--font-mono); font-size:0.85rem;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const csrfToken = '{{ csrf_token }}';
+
+    // ---- TAB SWITCHING ----
+    document.querySelectorAll('.dash-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // ---- ARTICLE SEARCH ----
+    document.getElementById('article-search').addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#articles-table tbody tr').forEach(row => {
+            const title = row.querySelector('.dash-article-title');
+            if (title) {
+                row.style.display = title.textContent.toLowerCase().includes(q) ? '' : 'none';
+            }
+        });
+    });
+
+    // ---- DELETE ARTICLE ----
+    async function deleteArticle(id) {
+        if (!confirm('Are you sure you want to delete this article?')) return;
+        try {
+            const resp = await fetch(`/dashboard/article/${id}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            if (resp.ok) {
+                const row = document.querySelector(`#articles-table tr[data-id="${id}"]`);
+                if (row) row.remove();
+            } else {
+                alert('Failed to delete article.');
+            }
+        } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    // ---- LOAD ARTICLE FOR EDIT ----
+    async function loadArticleForEdit(id) {
+        try {
+            const resp = await fetch(`/dashboard/article/${id}/edit/`);
+            const data = await resp.json();
+
+            document.getElementById('edit-article-id').value = data.id;
+            document.getElementById('form-article-title').value = data.title;
+            document.getElementById('form-article-summary').value = data.summary;
+            document.getElementById('form-article-content').value = data.content;
+            document.getElementById('form-article-source').value = data.source_url;
+            document.getElementById('form-article-tags').value = data.tags.join(', ');
+            document.getElementById('form-remove-image').checked = false;
+
+            // Set category
+            const catSelect = document.getElementById('form-article-category');
+            catSelect.value = data.category;
+
+            // Show current image
+            const imgContainer = document.getElementById('form-current-image');
+            if (data.cover_image) {
+                imgContainer.innerHTML = `<img src="${data.cover_image}" style="max-width:150px; border:1px solid #ccc;">`;
+            } else {
+                imgContainer.innerHTML = '<span style="color:#999; font-size:0.8rem;">No cover image</span>';
+            }
+
+            document.getElementById('form-title').textContent = 'Edit Article #' + data.id;
+            document.getElementById('form-status').textContent = '';
+
+            // Switch to Add/Edit tab
+            document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector('[data-tab="tab-add"]').classList.add('active');
+            document.getElementById('tab-add').classList.add('active');
+        } catch (e) { alert('Error loading article: ' + e.message); }
+    }
+
+    // ---- RESET FORM ----
+    function resetArticleForm() {
+        document.getElementById('edit-article-id').value = '';
+        document.getElementById('form-article-title').value = '';
+        document.getElementById('form-article-summary').value = '';
+        document.getElementById('form-article-content').value = '';
+        document.getElementById('form-article-source').value = '';
+        document.getElementById('form-article-tags').value = '';
+        document.getElementById('form-article-category').value = '';
+        document.getElementById('form-article-image').value = '';
+        document.getElementById('form-remove-image').checked = false;
+        document.getElementById('form-current-image').innerHTML = '';
+        document.getElementById('form-title').textContent = 'Add New Article';
+        document.getElementById('form-status').textContent = '';
+    }
+
+    // ---- SAVE ARTICLE (ADD or EDIT) ----
+    document.getElementById('save-article-btn').addEventListener('click', async () => {
+        const articleId = document.getElementById('edit-article-id').value;
+        const formData = new FormData();
+        formData.append('title', document.getElementById('form-article-title').value);
+        formData.append('summary', document.getElementById('form-article-summary').value);
+        formData.append('content', document.getElementById('form-article-content').value);
+        formData.append('category', document.getElementById('form-article-category').value);
+        formData.append('source_url', document.getElementById('form-article-source').value);
+        formData.append('tags', document.getElementById('form-article-tags').value);
+
+        const imageFile = document.getElementById('form-article-image').files[0];
+        if (imageFile) formData.append('cover_image', imageFile);
+
+        if (document.getElementById('form-remove-image').checked) {
+            formData.append('remove_cover_image', 'true');
+        }
+
+        const url = articleId
+            ? `/dashboard/article/${articleId}/edit/`
+            : '/dashboard/article/add/';
+
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                document.getElementById('form-status').innerHTML = `<span style="color:green;">✓ Article ${articleId ? 'saved' : 'created'} successfully! Reload page to see changes.</span>`;
+            } else {
+                document.getElementById('form-status').innerHTML = `<span style="color:red;">✗ ${data.error}</span>`;
+            }
+        } catch (e) {
+            document.getElementById('form-status').innerHTML = `<span style="color:red;">✗ ${e.message}</span>`;
+        }
+    });
+
+    // ---- GENERATE ARTICLES ----
+    document.getElementById('gen-btn').addEventListener('click', async () => {
+        const prompt = document.getElementById('gen-prompt').value.trim();
+        const category = document.getElementById('gen-category').value;
+        const count = document.getElementById('gen-count').value;
+
+        if (!prompt) { alert('Please enter a prompt.'); return; }
+
+        document.getElementById('gen-btn').disabled = true;
+        document.getElementById('gen-loading').style.display = 'block';
+        document.getElementById('gen-results').innerHTML = '';
+
+        try {
+            const resp = await fetch('/dashboard/generate/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ prompt, category, count })
+            });
+            const data = await resp.json();
+
+            if (resp.ok && data.articles) {
+                let html = `<h4 style="margin-bottom:0.75rem;">✓ Generated ${data.articles.length} articles</h4>`;
+                html += '<div class="dash-gen-results">';
+                data.articles.forEach(a => {
+                    html += `
+                        <div class="dash-gen-card">
+                            <h4>${a.title}</h4>
+                            <p>${a.summary}</p>
+                            <div class="meta">${a.category} • ${a.date} ${a.source_url ? '• <a href="' + a.source_url + '" target="_blank">Source ↗</a>' : ''}</div>
+                            <button class="dash-btn dash-btn-edit" onclick="loadArticleForEdit(${a.id})">Edit</button>
+                        </div>`;
+                });
+                html += '</div>';
+                document.getElementById('gen-results').innerHTML = html;
+            } else {
+                document.getElementById('gen-results').innerHTML = `<span style="color:red;">✗ ${data.error || 'Unknown error'}</span>`;
+            }
+        } catch (e) {
+            document.getElementById('gen-results').innerHTML = `<span style="color:red;">✗ ${e.message}</span>`;
+        } finally {
+            document.getElementById('gen-btn').disabled = false;
+            document.getElementById('gen-loading').style.display = 'none';
+        }
+    });
+
+    // ---- REFINE WITH AI ----
+    document.getElementById('refine-btn').addEventListener('click', async () => {
+        const title = document.getElementById('form-article-title').value.trim();
+        const content = document.getElementById('form-article-content').value.trim();
+        const instruction = document.getElementById('refine-instruction').value.trim();
+
+        if (!content) { alert('Write some content first before refining.'); return; }
+
+        document.getElementById('refine-btn').disabled = true;
+        document.getElementById('refine-loading').style.display = 'block';
+
+        try {
+            const resp = await fetch('/dashboard/refine/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ title, content, instruction })
+            });
+            const data = await resp.json();
+
+            if (resp.ok) {
+                document.getElementById('form-article-title').value = data.title || title;
+                document.getElementById('form-article-summary').value = data.summary || '';
+                document.getElementById('form-article-content').value = data.content || content;
+                document.getElementById('form-status').innerHTML = '<span style="color:green;">✓ Article refined by AI. Review and save.</span>';
+            } else {
+                document.getElementById('form-status').innerHTML = `<span style="color:red;">✗ ${data.error}</span>`;
+            }
+        } catch (e) {
+            document.getElementById('form-status').innerHTML = `<span style="color:red;">✗ ${e.message}</span>`;
+        } finally {
+            document.getElementById('refine-btn').disabled = false;
+            document.getElementById('refine-loading').style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

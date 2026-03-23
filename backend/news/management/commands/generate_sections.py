@@ -31,14 +31,17 @@ class Command(BaseCommand):
             category, _ = Category.objects.get_or_create(name=category_name)
 
             sys_prompt = (
-                f"You are an AI journalist for 'Redemption News'. Write 5 distinct, highly realistic, "
-                f"and engaging news articles for the '{category_name}' section. "
+                f"You are an AI journalist for 'Redemption News'. Write 5 distinct news articles for the '{category_name}' section. "
+                f"Each article MUST be based on a REAL, RECENT, and VERIFIABLE news event. "
+                f"Do NOT invent or fabricate any news stories. Only report on events that have actually happened "
+                f"and can be verified through reputable news sources. "
                 f"Each article MUST be at least 200 words long, formatted in paragraphs separated by double newlines. "
                 f"Return the output strictly as a JSON array of objects, with NO markdown codeblocks. "
                 "Each object must have the following keys:\n"
                 "1. 'title': The headline of the article.\n"
                 "2. 'summary': A 1-2 sentence summary of the news.\n"
                 "3. 'content': The full article body (>= 200 words).\n"
+                "4. 'source_url': A URL to the original source or a reputable news outlet covering this story.\n"
             )
 
             payload = {
@@ -84,6 +87,7 @@ class Command(BaseCommand):
                         summary=summary,
                         content=content,
                         category=category,
+                        source_url=art_data.get('source_url', ''),
                     )
                     
                 self.stdout.write(self.style.SUCCESS(f"Successfully generated {len(articles_data)} articles for {category_name}."))

@@ -192,8 +192,11 @@ def generate_personalized_articles(request):
     PersonalizedArticle.objects.filter(owner=request.user, is_archived=False).update(is_archived=True)
 
     system_prompt = (
-        f"You are a cutting-edge AI news desk. Your task is to write exactly 5 unique, completely formatted news articles "
+        f"You are a reliable AI news desk for 'Redemption News'. Your task is to write exactly 5 unique, completely formatted news articles "
         f"tailored to the following user interests: {interests}.\n\n"
+        f"CRITICAL: Each article MUST be based on a REAL, RECENT, and VERIFIABLE news event. "
+        f"Do NOT invent, fabricate, or speculate on any news stories. Only report on events that have actually happened "
+        f"and can be verified through reputable news sources.\n\n"
         f"Each article MUST be at least 200 words, highly detailed, engaging, and structured logically. "
         f"Return the output STRICTLY as a valid JSON list of objects. Do not include markdown blocks like ```json "
         f"or any text outside of the JSON array.\n\n"
@@ -204,7 +207,8 @@ def generate_personalized_articles(request):
         f"    \"topic\": \"Category/Topic\",\n"
         f"    \"summary\": \"A sharp 2-3 sentence summary...\",\n"
         f"    \"content\": \"Full article text with paragraphs separated by exactly one newline. At least 200 words...\",\n"
-        f"    \"tags\": [\"Tag1\", \"Tag2\", \"Tag3\"]\n"
+        f"    \"tags\": [\"Tag1\", \"Tag2\", \"Tag3\"],\n"
+        f"    \"source_url\": \"URL to the original source or a reputable news outlet covering this story\"\n"
         f"  }},\n"
         f"  ... (4 more objects)\n"
         f"]"

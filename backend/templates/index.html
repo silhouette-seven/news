@@ -248,42 +248,5 @@
         updateHero(0);
     }
 
-    // --- SECTION NAV SCROLLSPY ---
-    (function () {
-        const sectionNav = document.getElementById('section-nav');
-        if (!sectionNav) return;
-
-        const navLinks = sectionNav.querySelectorAll('.section-nav-link');
-        const sections = [];
-
-        navLinks.forEach(link => {
-            const sectionId = link.getAttribute('data-section');
-            const sectionEl = document.getElementById(sectionId);
-            if (sectionEl) {
-                sections.push({ link, el: sectionEl });
-            }
-        });
-
-        if (sections.length === 0) return;
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const matchedLink = sections.find(s => s.el === entry.target);
-                if (matchedLink) {
-                    if (entry.isIntersecting) {
-                        navLinks.forEach(l => l.classList.remove('active'));
-                        matchedLink.link.classList.add('active');
-                        // Scroll the nav to show active link
-                        matchedLink.link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    }
-                }
-            });
-        }, {
-            rootMargin: '-20% 0px -60% 0px',
-            threshold: 0
-        });
-
-        sections.forEach(s => observer.observe(s.el));
-    })();
 </script>
 {% endblock %}

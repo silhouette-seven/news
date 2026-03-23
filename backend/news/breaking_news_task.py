@@ -19,14 +19,17 @@ def generate_and_store_breaking_news():
     # We want a breaking news headline and a ~200 word article.
     # Return JSON so we can easily parse title and content.
     sys_prompt = (
-        "You are an AI news editor for 'Redemption News'. Generate a realistic and engaging breaking news event that "
-        "just happened (can be fictional or based on current events). "
+        "You are an AI news editor for 'Redemption News'. Your task is to report on a REAL breaking news event "
+        "that is currently happening or has very recently happened in the world. "
+        "You MUST only report on real, verifiable events. Do NOT invent or fabricate any news. "
+        "Base your article on actual current events that can be verified through reputable news sources. "
         "Return the output in strict JSON format with the following keys:\n"
         "1. 'headline': A short, punchy breaking news ticker text (max 100 characters).\n"
         "2. 'title': The full title of the article.\n"
         "3. 'summary': A 1-2 sentence summary of the news.\n"
         "4. 'content': A detailed article measuring at least 200 words, formatted in paragraphs separated by double newlines.\n"
         "5. 'category': The category of the news (e.g., Politics, Technology, World, Business, Science, Environment).\n"
+        "6. 'source_url': A URL to the original source or a reputable news outlet covering this story.\n"
         "Do not include markdown codeblocks (like ```json), just the raw JSON object."
     )
 
@@ -68,7 +71,7 @@ def generate_and_store_breaking_news():
             summary=news_data.get('summary', ''),
             content=news_data.get('content', ''),
             category=category,
-            source_url=''
+            source_url=news_data.get('source_url', '')
         )
         
         # Create BreakingNews entry
@@ -95,7 +98,9 @@ def generate_local_news(city, region, category):
 
     sys_prompt = (
         f"You are a local news reporter for 'Redemption News' covering the {city}, {region} area. "
-        f"Generate 3 distinct, highly realistic, and engaging local news articles for this specific city/region. "
+        f"Report on 3 distinct, REAL and RECENT local news events that have actually happened in this specific city/region. "
+        f"You MUST only report on real, verifiable events. Do NOT invent or fabricate any news stories. "
+        f"Base your articles on actual recent events that can be verified through local news sources. "
         f"Each article MUST be at least 200 words long, formatted in paragraphs. "
         f"Return the output STRICTLY as a JSON array of objects, with NO markdown codeblocks. "
         "Each object must have the following keys:\n"
