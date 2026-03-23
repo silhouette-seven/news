@@ -295,12 +295,26 @@
 <!-- Summary / Lead -->
 <p class="article-summary">{{ article.summary }}</p>
 
-<!-- Ask AI Button -->
-{% if request.user.is_authenticated %}
-<button class="ask-ai-btn" id="ask-ai-trigger">
-    <span class="ai-icon">✦</span> Ask AI About This Article
-</button>
-{% endif %}
+<!-- Ask AI Button & TTS Player -->
+<div style="display: flex; gap: 1rem; align-items: center; margin-bottom: var(--spacing-lg); flex-wrap: wrap;">
+    {% if request.user.is_authenticated %}
+    <button class="ask-ai-btn" id="ask-ai-trigger" style="margin-bottom: 0;">
+        <span class="ai-icon">✦</span> Ask AI About This Article
+    </button>
+    {% endif %}
+
+    <!-- Voiceover Section -->
+    <div class="tts-container" style="display: flex; align-items: center; gap: 0.5rem; background: var(--highlight); padding: 4px 12px; border: var(--border-thin);">
+        <select id="tts-voice-select" style="font-family: var(--font-mono); font-size: 0.8rem; padding: 4px; background: white; border: var(--border-thin); max-width: 150px;">
+            <option value="">Loading voices...</option>
+        </select>
+        <button id="tts-listen-btn" class="btn" style="background: var(--text-ink); color: white; padding: 4px 12px; font-size: 0.8rem; font-family: var(--font-mono); font-weight: bold; border: none; cursor: pointer;">
+            🔊 Listen
+        </button>
+        <div id="tts-loading" style="display: none; font-family: var(--font-mono); font-size: 0.8rem; color: #666;">Generating...</div>
+        <audio id="tts-audio-player" controls style="display: none; height: 32px; max-width: 250px;"></audio>
+    </div>
+</div>
 
 <!-- Cover Image -->
 {% if is_personalized and article.cover_image_url %}
@@ -401,13 +415,223 @@
 {% if request.user.is_authenticated %}
 <script>
 (function() {
+    // --- TTS Logic ---
+    const voiceSelect = document.getElementById('tts-voice-select');
+    const listenBtn = document.getElementById('tts-listen-btn');
+    const loadingEl = document.getElementById('tts-loading');
+    const audioPlayer = document.getElementById('tts-audio-player');
+    const articleId = Number("{{ article.id|default:'0' }}");
+
+    // Load voices on init
+    fetch('/tts/voices/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.voices && data.voices.length > 0) {
+                voiceSelect.innerHTML = '';
+                data.voices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.voice_id;
+                    option.textContent = `${voice.name} (${voice.category})`;
+                    // Pre-select a default good voice if present (e.g., Adam or Alice)
+                    if (voice.name === 'Adam' || voice.name === 'Rachel') {
+                        option.selected = true;
+                    }
+                    voiceSelect.appendChild(option);
+                });
+            } else {
+                voiceSelect.innerHTML = '<option value="">No voices available</option>';
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load voices', err);
+            voiceSelect.innerHTML = '<option value="">Error loading voices</option>';
+        });
+
+    // Listen button click handler
+    listenBtn.addEventListener('click', function() {
+        const voiceId = voiceSelect.value;
+        if (!voiceId) {
+            alert('Please select a voice first.');
+            return;
+        }
+
+        // UI state: loading
+        listenBtn.style.display = 'none';
+        voiceSelect.style.display = 'none';
+        loadingEl.style.display = 'block';
+        audioPlayer.style.display = 'none';
+
+        fetch(`/tts/article/${articleId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ voice_id: voiceId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            loadingEl.style.display = 'none';
+            if (data.error) {
+                alert('Audio generation failed: ' + data.error);
+                listenBtn.style.display = 'inline-block';
+                voiceSelect.style.display = 'inline-block';
+            } else if (data.audio_url) {
+                audioPlayer.src = data.audio_url;
+                audioPlayer.style.display = 'block';
+                
+                // Initialize word highlighting if alignment is available
+                if (data.alignment && data.alignment.characters) {
+                    setupWordHighlighting(data.alignment);
+                }
+                
+                audioPlayer.play();
+                // We keep the player visible and hide the button
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            loadingEl.style.display = 'none';
+            alert('Network error occurred.');
+            listenBtn.style.display = 'inline-block';
+            voiceSelect.style.display = 'inline-block';
+        });
+    });
+
+    let ttsWords = [];
+    let currentHighlightedSpan = null;
+
+    function setupWordHighlighting(alignment) {
+        // 1. Group characters into words with start and end times
+        ttsWords = [];
+        const chars = alignment.characters;
+        const starts = alignment.character_start_times_seconds;
+        const ends = alignment.character_end_times_seconds;
+        
+        let currentWord = "";
+        let currentStart = null;
+        let currentEnd = null;
+        
+        for (let i = 0; i < chars.length; i++) {
+            const char = chars[i];
+            const isWhitespace = /^\s$/.test(char);
+            
+            if (!isWhitespace) {
+                if (currentWord === "") currentStart = starts[i];
+                currentWord += char;
+                currentEnd = ends[i];
+            } else {
+                if (currentWord !== "") {
+                    ttsWords.push({ word: currentWord, start: currentStart, end: currentEnd });
+                    currentWord = "";
+                }
+            }
+        }
+        if (currentWord !== "") {
+            ttsWords.push({ word: currentWord, start: currentStart, end: currentEnd });
+        }
+
+        // 2. Wrap text nodes in spans in the DOM
+        const containers = [
+            document.querySelector('.article-title'),
+            document.querySelector('.article-summary'),
+            document.querySelector('.article-body')
+        ];
+        
+        let globalWordIndex = 0;
+        containers.forEach(container => {
+            if (!container) return;
+            // Get all text nodes safely
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+            const textNodes = [];
+            while(walker.nextNode()) textNodes.push(walker.currentNode);
+            
+            textNodes.forEach(node => {
+                const text = node.nodeValue;
+                if (!text.trim()) return;
+                
+                const regex = /(\S+)/g;
+                let match;
+                let lastIndex = 0;
+                const fragment = document.createDocumentFragment();
+                let hasMatch = false;
+                
+                while ((match = regex.exec(text)) !== null) {
+                    hasMatch = true;
+                    const preceding = text.substring(lastIndex, match.index);
+                    if (preceding) fragment.appendChild(document.createTextNode(preceding));
+                    
+                    const span = document.createElement('span');
+                    span.className = 'tts-word';
+                    span.id = `tts-word-${globalWordIndex++}`;
+                    span.style.transition = 'background-color 0.1s, color 0.1s';
+                    span.style.borderRadius = '3px';
+                    span.textContent = match[0];
+                    fragment.appendChild(span);
+                    
+                    lastIndex = regex.lastIndex;
+                }
+                
+                if (hasMatch) {
+                    const trailing = text.substring(lastIndex);
+                    if (trailing) fragment.appendChild(document.createTextNode(trailing));
+                    node.parentNode.replaceChild(fragment, node);
+                }
+            });
+        });
+
+        // 3. Sync audio timeupdate with word highlights
+        audioPlayer.addEventListener('timeupdate', () => {
+            const currentTime = audioPlayer.currentTime;
+            let activeIndex = -1;
+            
+            for (let i = 0; i < ttsWords.length; i++) {
+                if (currentTime >= ttsWords[i].start && currentTime <= ttsWords[i].end) {
+                    activeIndex = i;
+                    break;
+                }
+                if (i > 0 && currentTime > ttsWords[i-1].end && currentTime < ttsWords[i].start) {
+                    activeIndex = i - 1; // Highlight previous word during gaps
+                    break;
+                }
+            }
+            
+            if (activeIndex === -1 && ttsWords.length > 0 && currentTime > ttsWords[ttsWords.length - 1].end) {
+                activeIndex = -1; // End reached
+            }
+            
+            if (currentHighlightedSpan) {
+                currentHighlightedSpan.style.backgroundColor = 'transparent';
+                currentHighlightedSpan.style.color = 'inherit';
+                currentHighlightedSpan = null;
+            }
+            
+            if (activeIndex !== -1) {
+                const span = document.getElementById(`tts-word-${activeIndex}`);
+                if (span) {
+                    span.style.backgroundColor = '#ffeb3b'; // Nice yellow highlight
+                    span.style.color = '#000';
+                    currentHighlightedSpan = span;
+                }
+            }
+        });
+        
+        audioPlayer.addEventListener('ended', () => {
+            if (currentHighlightedSpan) {
+                currentHighlightedSpan.style.backgroundColor = 'transparent';
+                currentHighlightedSpan.style.color = 'inherit';
+                currentHighlightedSpan = null;
+            }
+        });
+    }
+
+    // --- AI Overlay Logic ---
     const trigger = document.getElementById('ask-ai-trigger');
     const overlay = document.getElementById('ai-overlay');
     const closeBtn = document.getElementById('ai-overlay-close');
     const promptInput = document.getElementById('overlay-prompt');
     const sendBtn = document.getElementById('overlay-send');
     const responseArea = document.getElementById('overlay-response');
-    const articleId = {{ article.id }};
 
     // Open overlay
     trigger.addEventListener('click', function() {

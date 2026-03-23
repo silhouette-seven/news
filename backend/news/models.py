@@ -59,3 +59,30 @@ class BreakingNews(models.Model):
 
     def __str__(self):
         return self.text
+
+class ArticleAudio(models.Model):
+    article = models.ForeignKey(NewsArticle, on_delete=models.CASCADE, related_name='audio_versions')
+    voice_id = models.CharField(max_length=50)
+    audio_file = models.FileField(upload_to='tts/', max_length=500)
+    alignment_json = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('article', 'voice_id')
+
+    def __str__(self):
+        return f"Audio for {self.article.title} (Voice: {self.voice_id})"
+
+class DailyPodcast(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='podcasts')
+    date = models.DateField(auto_now_add=True)
+    audio_file = models.FileField(upload_to='podcasts/', max_length=500)
+    script = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"Podcast for {self.user.username} on {self.date}"

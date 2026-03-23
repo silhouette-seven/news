@@ -1,5 +1,5 @@
 """
-URL configuration for core project.
+URL configuration for news project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/6.0/topics/http/urls/
@@ -24,6 +24,7 @@ from news.dashboard_views import (
     dashboard_view, dashboard_delete_article, dashboard_edit_article,
     dashboard_add_article, dashboard_generate_articles, dashboard_refine_article,
 )
+from news import tts_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,8 +38,13 @@ urlpatterns = [
     path('dashboard/article/<int:article_id>/delete/', dashboard_delete_article, name='dashboard_delete_article'),
     path('dashboard/article/<int:article_id>/edit/', dashboard_edit_article, name='dashboard_edit_article'),
     path('dashboard/article/add/', dashboard_add_article, name='dashboard_add_article'),
-    path('dashboard/generate/', dashboard_generate_articles, name='dashboard_generate_articles'),
-    path('dashboard/refine/', dashboard_refine_article, name='dashboard_refine_article'),
+    # Dashboard AI Endpoints
+    path('dashboard/api/generate-articles/', dashboard_generate_articles, name='dashboard_generate_articles'),
+    path('dashboard/api/refine-article/', dashboard_refine_article, name='dashboard_refine_article'),
+    # TTS & Podcast API
+    path('tts/voices/', tts_views.get_voices, name='tts_voices'),
+    path('tts/article/<int:article_id>/', tts_views.generate_article_audio, name='tts_article_audio'),
+    path('tts/podcast/', tts_views.generate_daily_podcast, name='tts_daily_podcast'),
     path('', index_view, name='home'),
 ]
 

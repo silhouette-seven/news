@@ -17,6 +17,24 @@
                 Generate Custom News</button>
         </div>
     </div>
+    
+    <!-- Podcast Generation Section -->
+    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #ccc; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+        <div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.2rem; font-family: var(--font-headline); display: flex; align-items: center; gap: 0.5rem;">
+                🎙️ Your Daily Audio Briefing
+            </h3>
+            <p style="font-size: 0.85rem; color: #555; font-family: var(--font-mono);">A 3-minute personalized summary of your topics + breaking news. (1 per day)</p>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <button id="podcast-generate-btn" class="signout-btn" style="background: var(--accent-brown); color: white; border: none; padding: 8px 16px; font-weight: bold; font-family: var(--font-mono); cursor: pointer;">
+                Generate Podcast
+            </button>
+            <div id="podcast-loading" style="display: none; font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-brown);">Processing...</div>
+            <audio id="podcast-audio-player" controls style="display: none; height: 35px;"></audio>
+        </div>
+    </div>
+
     <div id="loading-indicator" style="display: none; margin-top: 1rem; color: #666; font-family: var(--font-mono);">
         <span class="spinner">⏳</span> Generating your personalized articles from the AI Desk... This takes a few
         seconds.
@@ -150,12 +168,60 @@
     </aside>
 </div>
 
+{% block extra_js %}
+{% if request.user.is_authenticated %}
+<script>
+    (function() {
+        // --- Podcast Generation Logic ---
+        const podcastBtn = document.getElementById('podcast-generate-btn');
+        const podcastLoading = document.getElementById('podcast-loading');
+        const podcastPlayer = document.getElementById('podcast-audio-player');
+
+        if (podcastBtn) {
+            podcastBtn.addEventListener('click', function() {
+                // UI Loading state
+                podcastBtn.style.display = 'none';
+                podcastLoading.style.display = 'block';
+                podcastPlayer.style.display = 'none';
+
+                fetch('/tts/podcast/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(r => r.json())
+                .then(data => {
+                    podcastLoading.style.display = 'none';
+                    if (data.error) {
+                        alert('Podcast generation failed: ' + data.error);
+                        podcastBtn.style.display = 'inline-block';
+                    } else if (data.audio_url) {
+                        podcastPlayer.src = data.audio_url;
+                        podcastPlayer.style.display = 'block';
+                        podcastPlayer.play();
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    podcastLoading.style.display = 'none';
+                    alert('A network error occurred generating the podcast.');
+                    podcastBtn.style.display = 'inline-block';
+                });
+            });
+        }
+    })();
+</script>
+{% endif %}
+{% endblock %}
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const generateBtn = document.getElementById('generate-btn');
         const customInterests = document.getElementById('custom-interests');
         const loadingIndicator = document.getElementById('loading-indicator');
-        const articlesGrid = document.getElementById('personalized-articles-grid');
 
         const autoGenerate = {{ auto_generate|yesno:"true,false" }};
 
