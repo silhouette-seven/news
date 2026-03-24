@@ -9,7 +9,31 @@ from .models import NewsArticle, Category, Tag, PersonalizedArticle, BreakingNew
 from users.models import User, UserInteraction
 
 
-@staff_member_required(login_url='/signin/')
+def dashboard_login_view(request):
+    """Custom login page for the admin dashboard."""
+    from django.contrib.auth import authenticate, login
+    
+    if request.user.is_authenticated and request.user.is_staff:
+        return redirect('dashboard')
+        
+    error = None
+    if request.method == 'POST':
+        u = request.POST.get('username')
+        p = request.POST.get('password')
+        user = authenticate(request, username=u, password=p)
+        if user is not None:
+            if user.is_staff:
+                login(request, user)
+                return redirect('dashboard')
+            else:
+                error = "You do not have permission to access the dashboard."
+        else:
+            error = "Invalid username or password."
+            
+    return render(request, 'dashboard_login.html', {'error': error})
+
+
+@staff_member_required(login_url='/dashboard/login/')
 def dashboard_view(request):
     """Main dashboard page."""
     from datetime import datetime
@@ -37,7 +61,7 @@ def dashboard_view(request):
     return render(request, 'dashboard.html', context)
 
 
-@staff_member_required(login_url='/signin/')
+@staff_member_required(login_url='/dashboard/login/')
 @require_POST
 def dashboard_delete_article(request, article_id):
     """AJAX: Delete an article."""
@@ -49,7 +73,7 @@ def dashboard_delete_article(request, article_id):
     return JsonResponse({'status': 'deleted', 'id': article_id})
 
 
-@staff_member_required(login_url='/signin/')
+@staff_member_required(login_url='/dashboard/login/')
 def dashboard_edit_article(request, article_id):
     """GET: return article data as JSON. POST: save edits."""
     article = get_object_or_404(NewsArticle, id=article_id)
@@ -112,7 +136,7 @@ def dashboard_edit_article(request, article_id):
     return JsonResponse({'status': 'saved', 'id': article.id})
 
 
-@staff_member_required(login_url='/signin/')
+@staff_member_required(login_url='/dashboard/login/')
 @require_POST
 def dashboard_add_article(request):
     """POST: Create a new article."""
@@ -152,7 +176,7 @@ def dashboard_add_article(request):
     return JsonResponse({'status': 'created', 'id': article.id})
 
 
-@staff_member_required(login_url='/signin/')
+@staff_member_required(login_url='/dashboard/login/')
 @require_POST
 def dashboard_generate_articles(request):
     """AJAX: Generate articles via Gemini using a custom prompt."""
@@ -177,7 +201,7 @@ def dashboard_generate_articles(request):
         category, _ = Category.objects.get_or_create(name=category_name)
 
     system_prompt = (
-        f"You are a reliable AI journalist for 'Redemption News'. Based on the following editorial direction, "
+        f"You are a reliable AI journalist for 'Geo-News'. Based on the following editorial direction, "
         f"write exactly {count} unique news articles.\n\n"
         f"Editorial direction: {prompt}\n\n"
         f"CRITICAL: Each article MUST be based on REAL, RECENT, and VERIFIABLE news events. "
@@ -246,7 +270,7 @@ def dashboard_generate_articles(request):
         return JsonResponse({'error': f'AI Generation failed: {str(e)}'}, status=500)
 
 
-@staff_member_required(login_url='/signin/')
+@staff_member_required(login_url='/dashboard/login/')
 @require_POST
 def dashboard_refine_article(request):
     """AJAX: Send article content to Gemini to refine/polish it."""

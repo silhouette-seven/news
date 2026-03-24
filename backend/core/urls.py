@@ -23,6 +23,7 @@ from news.frontend_views import index_view, article_detail_view, category_view, 
 from news.dashboard_views import (
     dashboard_view, dashboard_delete_article, dashboard_edit_article,
     dashboard_add_article, dashboard_generate_articles, dashboard_refine_article,
+    dashboard_login_view
 )
 from news import tts_views
 
@@ -34,6 +35,7 @@ urlpatterns = [
     path('article/<int:article_id>/interact/', article_interact_view, name='article_interact'),
     path('category/<str:category_slug>/', category_view, name='category_page'),
     # Dashboard
+    path('dashboard/login/', dashboard_login_view, name='dashboard_login'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('dashboard/article/<int:article_id>/delete/', dashboard_delete_article, name='dashboard_delete_article'),
     path('dashboard/article/<int:article_id>/edit/', dashboard_edit_article, name='dashboard_edit_article'),

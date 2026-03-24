@@ -4,22 +4,17 @@ import time
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from news.models import NewsArticle, Category
+from datetime import datetime
 
 class Command(BaseCommand):
-    help = 'Generates 5 articles each for the specified layout categories using Gemini API'
+    help = 'Generates 3 articles each for the specified layout categories using NewsAPI and Gemini API'
 
     def handle(self, *args, **kwargs):
-        api_key = getattr(settings, 'GEMINI_API_KEY', None)
-        if not api_key:
-            self.stdout.write(self.style.ERROR("No GEMINI_API_KEY found in settings."))
-            return
-
-        gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-
+        from news.newsapi import fetch_and_extend_news
+        
         priority_order = [
-            "World", "US politics", "UK", "Climate crisis", "Middle East", 
-            "Ukraine", "Environment", "Science", "Global development", 
-            "Football", "Tech", "Business", "Obituaries", "Iran-Israel war"
+            "World", "US politics", "Tech", "Climate crisis", "Middle East", 
+            "Environment", "Science", "Business", "Football", "Global development"
         ]
 
         self.stdout.write(f"Starting generation for {len(priority_order)} categories...")
@@ -30,48 +25,18 @@ class Command(BaseCommand):
             # Create or get category
             category, _ = Category.objects.get_or_create(name=category_name)
 
-            sys_prompt = (
-                f"You are an AI journalist for 'Redemption News'. Write 5 distinct news articles for the '{category_name}' section. "
-                f"Each article MUST be based on a REAL, RECENT, and VERIFIABLE news event. "
-                f"Do NOT invent or fabricate any news stories. Only report on events that have actually happened "
-                f"and can be verified through reputable news sources. "
-                f"Each article MUST be at least 200 words long, formatted in paragraphs separated by double newlines. "
-                f"Return the output strictly as a JSON array of objects, with NO markdown codeblocks. "
-                "Each object must have the following keys:\n"
-                "1. 'title': The headline of the article.\n"
-                "2. 'summary': A 1-2 sentence summary of the news.\n"
-                "3. 'content': The full article body (>= 200 words).\n"
-                "4. 'source_url': A URL to the original source or a reputable news outlet covering this story.\n"
-            )
-
-            payload = {
-                "contents": [{"parts": [{"text": sys_prompt}]}]
-            }
-
             try:
-                response = requests.post(
-                    gemini_url,
-                    headers={"Content-Type": "application/json"},
-                    data=json.dumps(payload),
-                    timeout=60
-                )
-                response.raise_for_status()
-                data = response.json()
+                # Use query-based search for topics not in standard NewsAPI categories
+                standard_cats = ["business", "entertainment", "general", "health", "science", "sports", "technology"]
+                cat_lower = category_name.lower().split(" ")[0]
                 
-                text_response = data['candidates'][0]['content']['parts'][0]['text']
-                text_response = text_response.strip()
+                if cat_lower in standard_cats:
+                    articles_data = fetch_and_extend_news(category=cat_lower, count=3)
+                else:
+                    articles_data = fetch_and_extend_news(query=category_name, count=3)
                 
-                if text_response.startswith("```json"):
-                    text_response = text_response[7:]
-                if text_response.startswith("```"):
-                    text_response = text_response[3:]
-                if text_response.endswith("```"):
-                    text_response = text_response[:-3]
-                    
-                articles_data = json.loads(text_response.strip())
-                
-                if not isinstance(articles_data, list):
-                    self.stdout.write(self.style.ERROR(f"Expected a JSON list, got {type(articles_data)}"))
+                if not articles_data:
+                    self.stdout.write(self.style.ERROR(f"No articles returned for {category_name}"))
                     continue
 
                 for art_data in articles_data:
@@ -82,7 +47,7 @@ class Command(BaseCommand):
                     if len(content) < 50:
                         continue # Skip bad generations
                         
-                    NewsArticle.objects.create(
+                    article = NewsArticle.objects.create(
                         title=title,
                         summary=summary,
                         content=content,
@@ -90,12 +55,26 @@ class Command(BaseCommand):
                         source_url=art_data.get('source_url', ''),
                     )
                     
+                    # Download and save image
+                    img_url = art_data.get('cover_image_url')
+                    if img_url:
+                        try:
+                            import requests
+                            from django.core.files.base import ContentFile
+                            r = requests.get(img_url, timeout=5)
+                            if r.status_code == 200:
+                                ext = 'jpg'
+                                if '.png' in img_url.lower(): ext = 'png'
+                                article.cover_image.save(f"gen_cover_{article.id}.{ext}", ContentFile(r.content), save=True)
+                        except Exception as e:
+                            pass
+                    
                 self.stdout.write(self.style.SUCCESS(f"Successfully generated {len(articles_data)} articles for {category_name}."))
 
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Failed category {category_name}: {str(e)}"))
                 
-            # Prevent rate limiting (Gemini API allows ~15 RPM on free tier, 3-5 seconds is usually safe)
-            time.sleep(4)
+            self.stdout.write(self.style.WARNING(f"Sleeping for 25 seconds to respect Gemini 15 RPM limits..."))
+            time.sleep(25)
             
         self.stdout.write(self.style.SUCCESS("\nAll specified categories generated successfully!"))

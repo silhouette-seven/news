@@ -4,6 +4,7 @@ import random
 from django.conf import settings
 from .models import NewsArticle, Category, BreakingNews
 from django.utils.text import slugify
+from datetime import datetime
 
 def generate_and_store_breaking_news():
     """
@@ -18,10 +19,11 @@ def generate_and_store_breaking_news():
 
     # We want a breaking news headline and a ~200 word article.
     # Return JSON so we can easily parse title and content.
+    today_str = datetime.now().strftime("%B %d, %Y")
     sys_prompt = (
-        "You are an AI news editor for 'Redemption News'. Your task is to report on a REAL breaking news event "
-        "that is currently happening or has very recently happened in the world. "
-        "You MUST only report on real, verifiable events. Do NOT invent or fabricate any news. "
+        "You are an AI news editor for 'Geo-News'. Your task is to report on a REAL breaking news event You can get news from the internet "
+        f"that is currently happening TODAY ({today_str}) or has very recently happened within the last 24-48 hours. "
+        "You MUST only report on REAL, verifiable, recently occurred events. Do NOT report on past historical events. "
         "Base your article on actual current events that can be verified through reputable news sources. "
         "Return the output in strict JSON format with the following keys:\n"
         "1. 'headline': A short, punchy breaking news ticker text (max 100 characters).\n"
@@ -97,7 +99,7 @@ def generate_local_news(city, region, category):
     gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
 
     sys_prompt = (
-        f"You are a local news reporter for 'Redemption News' covering the {city}, {region} area. "
+        f"You are a local news reporter for 'Geo-News' covering the {city}, {region} area. "
         f"Report on 3 distinct, REAL and RECENT local news events that have actually happened in this specific city/region. "
         f"You MUST only report on real, verifiable events. Do NOT invent or fabricate any news stories. "
         f"Base your articles on actual recent events that can be verified through local news sources. "

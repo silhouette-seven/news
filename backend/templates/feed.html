@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}My Feed - Redemption News{% endblock %}
+{% block title %}My Feed - Geo-News{% endblock %}
 {% block nav_feed_active %}pnav-active{% endblock %}
 
 {% block content %}
@@ -250,6 +250,8 @@
         });
     }
 
+    const articlesGrid = document.getElementById('personalized-articles-grid');
+
     function renderArticles(articles) {
         articlesGrid.innerHTML = '';
         articles.forEach(article => {
@@ -324,9 +326,7 @@
 
     generateBtn.addEventListener('click', generateArticles);
 
-    if (autoGenerate) {
-        generateArticles();
-    }
+    // Auto-generate is disabled; user must click the button explicitly.
 });
 </script>
 {% endblock %}

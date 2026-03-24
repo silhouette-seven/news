@@ -48,6 +48,10 @@
     </div>
 </section>
 
+<!-- ===================== MAIN CONTENT + SIDEBAR ===================== -->
+<div class="page-with-sidebar">
+    <div class="page-main-content">
+
 <!-- ===================== PERSONALIZED SECTION ===================== -->
 {% if personalized_articles %}
 <section class="news-section" id="section-personalized">
@@ -78,7 +82,21 @@
         <a href="{% url 'category_page' section.slug %}" class="section-title-link">{{ section.title }}</a>
     </h2>
 
-    {% if section.layout == "grid-guardian" %}
+    {% if section.layout == "grid-bento" %}
+    <!-- LAYOUT: Bento Grid (varying sizes) -->
+    <div class="grid-bento">
+        {% for news in section.articles %}
+        <a href="{% url 'article_detail' news.id %}" class="bento-card">
+            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
+            <div class="bento-content">
+                <h4>{{ news.title }}</h4>
+                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% elif section.layout == "grid-guardian" %}
     <!-- LAYOUT: Guardian (Featured Left + Sub-cards Right) -->
     <div class="news-section-grid">
         {% for news in section.articles %}
@@ -189,6 +207,51 @@
     {% endif %}
 </section>
 {% endfor %}
+    </div> <!-- End main content -->
+    
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="page-sidebar">
+        <div class="sidebar-widgets">
+            <!-- Top Stories Widget -->
+            <div class="sidebar-widget">
+                <h4 class="sidebar-widget-title">
+                    <span class="widget-icon">⭐</span> Top Stories
+                </h4>
+                <ul class="trending-list">
+                    {% for article in trending_articles %}
+                    <li class="trending-item">
+                        <span class="trending-rank">{{ forloop.counter }}</span>
+                        <a href="{% url 'article_detail' article.id %}">{{ article.title }}</a>
+                    </li>
+                    {% empty %}
+                    <p class="text-mono" style="font-size: 0.8rem; color: #777;">Check back soon for top stories.</p>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Live Matches / Events Widget -->
+            <div class="sidebar-widget">
+                <h4 class="sidebar-widget-title">
+                    <span class="widget-icon">🔴</span> Live Updates
+                </h4>
+                <ul class="quick-feed-list">
+                    <li class="quick-feed-item">
+                        <div class="quick-feed-topic">Cricket</div>
+                        <a href="#">IND 145/2 (18.4) vs AUS - Live Score</a>
+                    </li>
+                    <li class="quick-feed-item">
+                        <div class="quick-feed-topic">Politics</div>
+                        <a href="#">Senate votes on new foreign policy bill</a>
+                    </li>
+                    <li class="quick-feed-item">
+                        <div class="quick-feed-topic">Markets</div>
+                        <a href="#">S&P 500 hits record high at open</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+</div> <!-- End page-with-sidebar -->
 {% endblock %}
 
 {% block extra_js %}

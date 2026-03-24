@@ -67,11 +67,12 @@ def get_weather_data(latitude=11.6643, longitude=78.1460):
 def _annotate_articles(queryset, category_name):
     """Attach a unique fallback_image attribute to each article in a queryset."""
     articles = list(queryset)
-    for i, article in enumerate(articles):
+    for article in articles:
         if article.cover_image:
             article.fallback_image = article.cover_image.url
         else:
-            article.fallback_image = get_fallback_image(category_name, i)
+            cat_name = article.category.name if article.category else category_name
+            article.fallback_image = get_fallback_image(cat_name, article.id)
     return articles
 
 
@@ -82,9 +83,9 @@ def index_view(request):
     temp_f, weather_desc = get_weather_data(latitude=lat, longitude=lon)
 
     # Hero Articles
-    hero_qs = NewsArticle.objects.all()[:4]
+    hero_qs = NewsArticle.objects.all().order_by('-published_date')[:4]
     hero_list = []
-    for i, article in enumerate(hero_qs):
+    for article in hero_qs:
         cat_name = article.category.name if article.category else "default"
         hero_list.append({
             "id": article.id,
@@ -93,7 +94,7 @@ def index_view(request):
             "content": article.content,
             "location": "Global",
             "date": article.published_date.strftime('%B %d, %Y'),
-            "image": article.cover_image.url if article.cover_image else get_fallback_image(cat_name, i)
+            "image": article.cover_image.url if article.cover_image else get_fallback_image(cat_name, article.id)
         })
 
     # Build sections dynamically based on database categories
@@ -110,7 +111,7 @@ def index_view(request):
     # Fast moving/compact topics
     compact_topics = ["Ukraine", "Iran-Israel war", "Middle East", "Science"]
     
-    layouts_pool = ["grid-feature-heavy", "grid-guardian", "grid-three-col", "grid-masonry"]
+    layouts_pool = ["grid-three-col", "grid-masonry"]
 
     # First fetch all non-empty categories
     all_cats = list(Category.objects.all())
@@ -174,6 +175,9 @@ def index_view(request):
             is_archived=False
         ).order_by('-created_at')[:5]
 
+    # Trending Articles for Sidebar (Mock based on recent articles for now, or use views if tracked)
+    trending_articles = NewsArticle.objects.order_by('?')[:5]
+
     context = {
         'date_str': date_str,
         'temp_f': temp_f,
@@ -183,6 +187,7 @@ def index_view(request):
         'hero_articles': hero_qs,
         'sections': sections,
         'personalized_articles': personalized_articles,
+        'trending_articles': trending_articles,
     }
     return render(request, 'index.html', context)
 

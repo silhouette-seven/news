@@ -44,20 +44,25 @@ pip install -r requirements.txt
 pip install django djangorestframework python-dotenv pillow requests
 ```
 
-### 5. Run Migrations
-Generate the required local database structure for the Users and News apps.
+### 5. Run Migrations & Database
+This repository comes pre-loaded with a populated SQLite database (`db_new.sqlite3`) containing over 30 verified articles and their downloaded cover images to ensure the UI renders beautifully upon first launch. 
+*(If you need to reset the database, simply delete `db_new.sqlite3` and run `python manage.py makemigrations` and `python manage.py migrate`)*
+
+### 6. Environment Variables
+Create a `.env` file in the `backend/` directory:
 ```bash
-python manage.py makemigrations users news
-python manage.py migrate
+GEMINI_API_KEY=your_gemini_key_here
+NEWSAPI_KEY=your_newsapi_key_here
+```
+*(Note: A fallback NewsAPI key is embedded, but you must supply a Gemini key to generate new content extensions).*
+
+### 7. Load Sample Data (Optional)
+To fetch and generate 30 fresh news articles spanning different categories using the NewsAPI + Gemini pipeline:
+```bash
+python manage.py generate_sections
 ```
 
-### 6. Load Sample Data (Optional)
-To test the retro grid UI layout, you can generate 10 sample news articles spanning different categories using the built-in management script:
-```bash
-python manage.py load_sample_news
-```
-
-### 7. Run the Development Server
+### 8. Run the Development Server
 ```bash
 python manage.py runserver
 ```

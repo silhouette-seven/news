@@ -69,7 +69,7 @@ def feed_view(request):
     
     # Check if AI articles were generated today
     has_generated_today = PersonalizedArticle.objects.filter(owner=user, generated_date=today).exists()
-    auto_generate = not has_generated_today
+    auto_generate = False  # Changed from auto-generating daily so user has explicit control
 
     # Fetch active personalized articles
     personalized_articles = PersonalizedArticle.objects.filter(owner=user, is_archived=False).order_by('-created_at')
@@ -184,68 +184,27 @@ def generate_personalized_articles(request):
             uts.score += 20.0  # Boost for explicit generation usage
             uts.save()
 
-    api_key = settings.GEMINI_API_KEY
-    if not api_key:
-        return JsonResponse({'error': 'AI service is not configured.'}, status=500)
-
-    # Auto-archive old personalized articles for this user
-    PersonalizedArticle.objects.filter(owner=request.user, is_archived=False).update(is_archived=True)
-
-    system_prompt = (
-        f"You are a reliable AI news desk for 'Redemption News'. Your task is to write exactly 5 unique, completely formatted news articles "
-        f"tailored to the following user interests: {interests}.\n\n"
-        f"CRITICAL: Each article MUST be based on a REAL, RECENT, and VERIFIABLE news event. "
-        f"Do NOT invent, fabricate, or speculate on any news stories. Only report on events that have actually happened "
-        f"and can be verified through reputable news sources.\n\n"
-        f"Each article MUST be at least 200 words, highly detailed, engaging, and structured logically. "
-        f"Return the output STRICTLY as a valid JSON list of objects. Do not include markdown blocks like ```json "
-        f"or any text outside of the JSON array.\n\n"
-        f"Format of the JSON list:\n"
-        f"[\n"
-        f"  {{\n"
-        f"    \"title\": \"Compelling Article Headline\",\n"
-        f"    \"topic\": \"Category/Topic\",\n"
-        f"    \"summary\": \"A sharp 2-3 sentence summary...\",\n"
-        f"    \"content\": \"Full article text with paragraphs separated by exactly one newline. At least 200 words...\",\n"
-        f"    \"tags\": [\"Tag1\", \"Tag2\", \"Tag3\"],\n"
-        f"    \"source_url\": \"URL to the original source or a reputable news outlet covering this story\"\n"
-        f"  }},\n"
-        f"  ... (4 more objects)\n"
-        f"]"
-    )
-
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-
+    # Call the new NewsAPI + Gemini helper
+    from news.newsapi import fetch_and_extend_news
+    articles_data = fetch_and_extend_news(query=interests, count=5)
+    
+    if not articles_data:
+        return JsonResponse({'error': 'NewsAPI/Gemini pipeline failed to generate articles.'}, status=500)
+    
     try:
-        resp = http_requests.post(
-            gemini_url,
-            json={"contents": [{"parts": [{"text": system_prompt}]}]},
-            timeout=50,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        raw_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
-        
-        # Strip markdown json blocks if returned
-        if raw_text.startswith('```json'): raw_text = raw_text[7:]
-        elif raw_text.startswith('```'): raw_text = raw_text[3:]
-        if raw_text.endswith('```'): raw_text = raw_text[:-3]
-        raw_text = raw_text.strip()
-        
-        articles_data = json.loads(raw_text)
-        
         created = []
         today = timezone.now().date()
         for i, ad in enumerate(articles_data):
-            # Use fixed fallback images safely mapped to topics instead of Unsplash
-            img_url = get_fallback_image(ad.get('topic', 'General'), i)
+            img_url = ad.get('cover_image_url')
+            if not img_url:
+                img_url = get_fallback_image(ad.get('topic', 'General'), request.user.id + i)
             
             pa = PersonalizedArticle.objects.create(
                 owner=request.user,
                 title=ad.get('title', 'Untitled'),
                 summary=ad.get('summary', ''),
                 content=ad.get('content', ''),
-                topic=ad.get('topic', 'General'),
+                topic=interests[:100],  # the requested topic
                 cover_image_url=img_url,
                 generated_date=today
             )
@@ -345,7 +304,7 @@ def ai_search_articles(request):
             'summary': article.summary[:150],
             'category': cat_name,
             'date': article.published_date.strftime('%b %d, %Y'),
-            'image': article.cover_image.url if article.cover_image else get_fallback_image(cat_name, i),
+            'image': article.cover_image.url if article.cover_image else get_fallback_image(cat_name, article.id),
         })
 
     return JsonResponse({'results': results})

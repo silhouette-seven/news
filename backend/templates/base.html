@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Redemption News{% endblock %}</title>
+    <title>{% block title %}Geo-News{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +34,7 @@
     <div id="mobile-sidebar-overlay" class="mobile-sidebar-overlay"></div>
     <div id="mobile-sidebar" class="mobile-sidebar">
         <div class="sidebar-header">
-            <span class="brand-link">Redemption</span>
+            <span class="brand-link">Geo-News</span>
             <button id="mobile-sidebar-close" class="mobile-sidebar-close">&times;</button>
         </div>
         <nav class="sidebar-nav">
@@ -64,7 +64,7 @@
         <div class="unified-nav-inner">
             <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menu">☰</button>
             <div class="header-brand">
-                <a href="{% url 'home' %}" class="brand-link">Redemption News</a>
+                <a href="{% url 'home' %}" class="brand-link">Geo-News</a>
             </div>
             <nav class="header-primary-nav desktop-only">
                 <a href="{% url 'home' %}" class="pnav-link {% block nav_home_active %}{% endblock %}">Home</a>
@@ -135,7 +135,7 @@
                 </div>
             </div>
             
-            <a href="{% url 'home' %}"><h1 style="color: var(--text-ink); border-bottom: 3px solid var(--text-ink); border-top: 3px solid var(--text-ink);">PLACEHOLDER</h1></a>
+            <a href="{% url 'home' %}"><h1 style="color: var(--text-ink); border-bottom: 3px solid var(--text-ink); border-top: 3px solid var(--text-ink);">GEO-NEWS</h1></a>
             
             {% if breaking_news and breaking_news.article %}
             <div style="background-color: #c4302b; color: white; padding: 8px 15px; font-family: var(--font-mono); font-weight: bold; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1rem; border: 2px solid var(--text-ink); box-shadow: 4px 4px 0px var(--text-ink); display: flex; justify-content: space-between; align-items: center;">
@@ -158,7 +158,7 @@
             <div class="footer-inner">
                 <div class="footer-top">
                     <div class="footer-brand">
-                        <span class="footer-brand-name">Redemption News</span>
+                        <span class="footer-brand-name">Geo-News</span>
                         <p class="footer-tagline">Delivering reliable, verified news — powered by AI, grounded in truth.</p>
                     </div>
                     <div class="footer-nav">
@@ -182,7 +182,7 @@
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <p class="footer-copyright">&copy; {% now "Y" %} Redemption News Company. All Rights Reserved.</p>
+                    <p class="footer-copyright">&copy; {% now "Y" %} Geo-News Company. All Rights Reserved.</p>
                     <div class="footer-links">
                         <span>About</span>
                         <span>&bull;</span>

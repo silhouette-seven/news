@@ -43,7 +43,6 @@
         border: 4px solid var(--text-ink);
         padding: 4px;
         margin-bottom: var(--spacing-lg);
-        filter: sepia(0.3) contrast(1.05);
     }
     .article-title {
         font-size: 2.8rem;
@@ -305,13 +304,10 @@
 
     <!-- Voiceover Section -->
     <div class="tts-container" style="display: flex; align-items: center; gap: 0.5rem; background: var(--highlight); padding: 4px 12px; border: var(--border-thin);">
-        <select id="tts-voice-select" style="font-family: var(--font-mono); font-size: 0.8rem; padding: 4px; background: white; border: var(--border-thin); max-width: 150px;">
-            <option value="">Loading voices...</option>
-        </select>
         <button id="tts-listen-btn" class="btn" style="background: var(--text-ink); color: white; padding: 4px 12px; font-size: 0.8rem; font-family: var(--font-mono); font-weight: bold; border: none; cursor: pointer;">
-            🔊 Listen
+            🔊 Listen to Article
         </button>
-        <div id="tts-loading" style="display: none; font-family: var(--font-mono); font-size: 0.8rem; color: #666;">Generating...</div>
+        <div id="tts-loading" style="display: none; font-family: var(--font-mono); font-size: 0.8rem; color: #666;">Generating audio...</div>
         <audio id="tts-audio-player" controls style="display: none; height: 32px; max-width: 250px;"></audio>
     </div>
 </div>
@@ -371,7 +367,7 @@
     <div class="grid-three-col" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
         {% for sim in similar_articles %}
         <a href="{% url 'article_detail' sim.id %}" class="three-col-card" style="text-decoration: none; color: inherit; display: block;">
-            <img src="{% if sim.cover_image %}{{ sim.cover_image.url }}{% else %}{{ sim.fallback_image }}{% endif %}" alt="{{ sim.title }}" style="width: 100%; height: 180px; object-fit: cover; filter: sepia(0.3) contrast(1.05); margin-bottom: 10px; border: 2px solid var(--text-ink);">
+            <img src="{% if sim.cover_image %}{{ sim.cover_image.url }}{% else %}{{ sim.fallback_image }}{% endif %}" alt="{{ sim.title }}" style="width: 100%; height: 180px; object-fit: cover; margin-bottom: 10px; border: 2px solid var(--text-ink);">
             <div class="card-body">
                 <h4 style="font-size: 1.1rem; margin-bottom: 5px; font-family: var(--font-headline); line-height: 1.2;">{{ sim.title }}</h4>
                 <div class="meta" style="font-family: var(--font-mono); font-size: 0.75rem; color: #666;">{{ sim.published_date|date:'M d, Y' }}</div>
@@ -412,52 +408,19 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if request.user.is_authenticated %}
 <script>
 (function() {
     // --- TTS Logic ---
-    const voiceSelect = document.getElementById('tts-voice-select');
+    const ADAM_VOICE_ID = 'pNInz6obpgDQGcFmaJgB';
     const listenBtn = document.getElementById('tts-listen-btn');
     const loadingEl = document.getElementById('tts-loading');
     const audioPlayer = document.getElementById('tts-audio-player');
     const articleId = Number("{{ article.id|default:'0' }}");
 
-    // Load voices on init
-    fetch('/tts/voices/')
-        .then(r => r.json())
-        .then(data => {
-            if (data.voices && data.voices.length > 0) {
-                voiceSelect.innerHTML = '';
-                data.voices.forEach(voice => {
-                    const option = document.createElement('option');
-                    option.value = voice.voice_id;
-                    option.textContent = `${voice.name} (${voice.category})`;
-                    // Pre-select a default good voice if present (e.g., Adam or Alice)
-                    if (voice.name === 'Adam' || voice.name === 'Rachel') {
-                        option.selected = true;
-                    }
-                    voiceSelect.appendChild(option);
-                });
-            } else {
-                voiceSelect.innerHTML = '<option value="">No voices available</option>';
-            }
-        })
-        .catch(err => {
-            console.error('Failed to load voices', err);
-            voiceSelect.innerHTML = '<option value="">Error loading voices</option>';
-        });
-
-    // Listen button click handler
+    // Listen button click handler — uses Adam voice directly
     listenBtn.addEventListener('click', function() {
-        const voiceId = voiceSelect.value;
-        if (!voiceId) {
-            alert('Please select a voice first.');
-            return;
-        }
-
         // UI state: loading
         listenBtn.style.display = 'none';
-        voiceSelect.style.display = 'none';
         loadingEl.style.display = 'block';
         audioPlayer.style.display = 'none';
 
@@ -467,7 +430,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify({ voice_id: voiceId })
+            body: JSON.stringify({ voice_id: ADAM_VOICE_ID })
         })
         .then(r => r.json())
         .then(data => {
@@ -475,7 +438,6 @@
             if (data.error) {
                 alert('Audio generation failed: ' + data.error);
                 listenBtn.style.display = 'inline-block';
-                voiceSelect.style.display = 'inline-block';
             } else if (data.audio_url) {
                 audioPlayer.src = data.audio_url;
                 audioPlayer.style.display = 'block';
@@ -486,7 +448,6 @@
                 }
                 
                 audioPlayer.play();
-                // We keep the player visible and hide the button
             }
         })
         .catch(err => {
@@ -494,7 +455,6 @@
             loadingEl.style.display = 'none';
             alert('Network error occurred.');
             listenBtn.style.display = 'inline-block';
-            voiceSelect.style.display = 'inline-block';
         });
     });
 
@@ -634,33 +594,35 @@
     const responseArea = document.getElementById('overlay-response');
 
     // Open overlay
-    trigger.addEventListener('click', function() {
-        overlay.classList.add('active');
-        promptInput.focus();
-    });
+    if (trigger) {
+        trigger.addEventListener('click', function() {
+            overlay.classList.add('active');
+            promptInput.focus();
+        });
 
-    // Close overlay
-    closeBtn.addEventListener('click', function() {
-        overlay.classList.remove('active');
-    });
-
-    // Close on backdrop click
-    overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) overlay.classList.remove('active');
-    });
-
-    // Close on Escape
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && overlay.classList.contains('active')) {
+        // Close overlay
+        closeBtn.addEventListener('click', function() {
             overlay.classList.remove('active');
-        }
-    });
+        });
 
-    // Send prompt
-    sendBtn.addEventListener('click', askAI);
-    promptInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') askAI();
-    });
+        // Close on backdrop click
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) overlay.classList.remove('active');
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && overlay.classList.contains('active')) {
+                overlay.classList.remove('active');
+            }
+        });
+
+        // Send prompt
+        sendBtn.addEventListener('click', askAI);
+        promptInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') askAI();
+        });
+    }
 
     function askAI() {
         const prompt = promptInput.value.trim();
@@ -741,5 +703,4 @@
 
 })();
 </script>
-{% endif %}
 {% endblock %}
