@@ -102,7 +102,9 @@ def feed_view(request):
         # Fallback image
         cat_name = article.category.name if article.category else "default"
         from news.frontend_views import get_fallback_image
-        if article.cover_image:
+        if getattr(article, 'cover_image_url', None):
+            article.fallback_image = article.cover_image_url
+        elif article.cover_image:
             article.fallback_image = article.cover_image.url
         else:
             article.fallback_image = get_fallback_image(cat_name, article.id)
@@ -304,7 +306,7 @@ def ai_search_articles(request):
             'summary': article.summary[:150],
             'category': cat_name,
             'date': article.published_date.strftime('%b %d, %Y'),
-            'image': article.cover_image.url if article.cover_image else get_fallback_image(cat_name, article.id),
+            'image': getattr(article, 'cover_image_url', None) or (article.cover_image.url if article.cover_image else get_fallback_image(cat_name, article.id)),
         })
 
     return JsonResponse({'results': results})
@@ -360,6 +362,14 @@ def ai_ask_gemini(request):
             },
             timeout=30,
         )
+        if resp.status_code == 429:
+            import time
+            time.sleep(5)
+            resp = http_requests.post(
+                gemini_url,
+                json={"contents": [{"parts": [{"text": system_prompt}]}]},
+                timeout=30,
+            )
         resp.raise_for_status()
         data = resp.json()
         text = data['candidates'][0]['content']['parts'][0]['text']

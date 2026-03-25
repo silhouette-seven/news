@@ -18,7 +18,7 @@
     {% if forloop.first %}
     <a href="{% url 'article_detail' news.id %}" class="featured-card">
         <span class="featured-tag">{{ news.category.name }}</span>
-        <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+        <img src="{{ news.fallback_image }}"
             alt="{{ news.title }}">
         <h3>{{ news.title }}</h3>
         <p>{{ news.summary }}</p>
@@ -33,7 +33,7 @@
                 <p>{{ news.summary }}</p>
                 <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
             </div>
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+            <img src="{{ news.fallback_image }}"
                 alt="{{ news.title }}">
         </a>
     {% endif %}
@@ -50,7 +50,7 @@
         {% for news in articles %}
         {% if forloop.counter > 6 %}
         <a href="{% url 'article_detail' news.id %}" class="three-col-card">
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
+            <img src="{{ news.fallback_image }}"
                 alt="{{ news.title }}">
             <div class="card-body">
                 <h4>{{ news.title }}</h4>

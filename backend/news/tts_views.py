@@ -207,3 +207,151 @@ def generate_daily_podcast(request):
         'audio_url': podcast.audio_file.url,
         'script': script
     })
+
+
+@login_required
+@require_POST
+def generate_daily_article(request):
+    """
+    Generate a personalized daily article (200-300 words) based on user interests.
+    Uses the newsapi pipeline to fetch relevant news, then condenses into one article.
+    Saves cover images from source news for display. Limited to 1 per day per user.
+    """
+    from .models import PersonalizedArticle, Tag
+    from .newsapi import fetch_and_extend_news
+    from news.frontend_views import get_fallback_image
+    from users.models import UserTagScore
+
+    user = request.user
+    today = timezone.localdate()
+
+    # 1. Check if article already exists for today
+    existing = PersonalizedArticle.objects.filter(
+        owner=user,
+        generated_date=today,
+        is_archived=False,
+        topic__startswith='Daily Briefing'
+    ).first()
+
+    if existing:
+        return JsonResponse({
+            'status': 'cached',
+            'article_url': f'/article/ai/{existing.id}/',
+            'title': existing.title,
+        })
+
+    # 2. Determine user interests
+    top_tag_scores = UserTagScore.get_top_tags(user, limit=5)
+    if top_tag_scores:
+        interests = ", ".join([ts.tag.name for ts in top_tag_scores])
+    else:
+        interests = "entertainment, sports, technology"
+
+    # 3. Fetch news using newsapi pipeline
+    try:
+        articles_data = fetch_and_extend_news(query=interests, count=3)
+    except Exception as fetch_err:
+        print(f"DailyArticle: Fetch failed - {fetch_err}")
+        articles_data = []
+
+    if not articles_data:
+        return JsonResponse({
+            'error': 'Could not fetch news for your interests. The news service may be temporarily unavailable. Please try again later.'
+        }, status=500)
+
+    # 4. Collect cover images from source articles (for collage display)
+    cover_images = []
+    for ad in articles_data:
+        img = ad.get('cover_image_url', '')
+        if img and img.strip():
+            cover_images.append(img.strip())
+
+    # Use first available as primary cover, store all for potential collage
+    primary_cover = cover_images[0] if cover_images else get_fallback_image('Daily Briefing', user.id)
+
+    # 5. Condense the fetched articles into a single 200-300 word article
+    gemini_key = settings.GEMINI_API_KEY
+    if not gemini_key:
+        return JsonResponse({'error': 'AI service not configured.'}, status=500)
+
+    # Build rich context for Gemini from the pipeline articles
+    article_contexts = []
+    for i, ad in enumerate(articles_data):
+        article_contexts.append(
+            f"Article {i+1}:\n"
+            f"Title: {ad.get('title', '')}\n"
+            f"Summary: {ad.get('summary', '')}\n"
+            f"Content excerpt: {ad.get('content', '')[:300]}"
+        )
+    context_text = "\n\n".join(article_contexts)
+
+    condense_prompt = (
+        f"You are a personal news editor for 'Geo-News'. The reader is interested in: {interests}.\n"
+        f"Below are full news articles from today that match their interests:\n\n{context_text}\n\n"
+        f"Write a single, cohesive personalized daily briefing article (200-300 words) that:\n"
+        f"- Covers the key highlights from ALL the stories above\n"
+        f"- Uses an engaging journalistic tone with clear paragraphs\n"
+        f"- Has a compelling, specific headline (not generic like 'Daily Briefing')\n"
+        f"- Feels like a professional news article, not a summary list\n\n"
+        f"Return STRICTLY a JSON object with NO markdown codeblocks:\n"
+        f'{{"title": "compelling headline", "summary": "1-2 sentence hook", "content": "200-300 word article body with paragraphs separated by double newlines"}}'
+    )
+
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+
+    try:
+        resp = http_requests.post(
+            gemini_url,
+            json={"contents": [{"parts": [{"text": condense_prompt}]}]},
+            timeout=45,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        raw_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
+
+        if raw_text.startswith("```json"): raw_text = raw_text[7:]
+        if raw_text.startswith("```"): raw_text = raw_text[3:]
+        if raw_text.endswith("```"): raw_text = raw_text[:-3]
+
+        result = json.loads(raw_text.strip())
+
+        # 6. Save as PersonalizedArticle (private to the user)
+        pa = PersonalizedArticle.objects.create(
+            owner=user,
+            title=result.get('title', 'Your Daily Briefing'),
+            summary=result.get('summary', ''),
+            content=result.get('content', ''),
+            topic=f"Daily Briefing - {interests[:80]}",
+            cover_image_url=primary_cover,
+            generated_date=today,
+        )
+
+        # Attach tags from source articles
+        all_tags = set()
+        for ad in articles_data:
+            for t in ad.get('tags', [])[:3]:
+                t_name = str(t).strip()[:50]
+                if t_name:
+                    all_tags.add(t_name)
+        for t_name in list(all_tags)[:5]:
+            tag_obj, _ = Tag.objects.get_or_create(name=t_name)
+            pa.tags.add(tag_obj)
+
+        return JsonResponse({
+            'status': 'generated',
+            'article_url': f'/article/ai/{pa.id}/',
+            'title': pa.title,
+        })
+
+    except http_requests.exceptions.HTTPError as he:
+        error_msg = f'API error: {he}'
+        if hasattr(he, 'response') and he.response.status_code == 429:
+            error_msg = 'AI service rate limit reached. Please try again in a minute.'
+        print(f"DailyArticle: Gemini error - {error_msg}")
+        return JsonResponse({'error': error_msg}, status=500)
+
+    except Exception as e:
+        print(f"DailyArticle: Unexpected error - {e}")
+        return JsonResponse({'error': f'Article generation failed: {str(e)}'}, status=500)
+
+

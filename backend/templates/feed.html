@@ -18,20 +18,19 @@
         </div>
     </div>
     
-    <!-- Podcast Generation Section -->
+    <!-- Daily Personalized Article Section -->
     <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #ccc; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
         <div>
             <h3 style="font-size: 1.2rem; margin-bottom: 0.2rem; font-family: var(--font-headline); display: flex; align-items: center; gap: 0.5rem;">
-                🎙️ Your Daily Audio Briefing
+                📰 Your Daily Article
             </h3>
-            <p style="font-size: 0.85rem; color: #555; font-family: var(--font-mono);">A 3-minute personalized summary of your topics + breaking news. (1 per day)</p>
+            <p style="font-size: 0.85rem; color: #555; font-family: var(--font-mono);">A personalized 200-300 word article covering your interests. Generated once per day.</p>
         </div>
         <div style="display: flex; gap: 1rem; align-items: center;">
-            <button id="podcast-generate-btn" class="signout-btn" style="background: var(--accent-brown); color: white; border: none; padding: 8px 16px; font-weight: bold; font-family: var(--font-mono); cursor: pointer;">
-                Generate Podcast
+            <button id="daily-article-btn" class="signout-btn" style="background: var(--accent-brown); color: white; border: none; padding: 8px 16px; font-weight: bold; font-family: var(--font-mono); cursor: pointer;">
+                Show My Article
             </button>
-            <div id="podcast-loading" style="display: none; font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-brown);">Processing...</div>
-            <audio id="podcast-audio-player" controls style="display: none; height: 35px;"></audio>
+            <div id="daily-article-loading" style="display: none; font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-brown);">Generating your article...</div>
         </div>
     </div>
 
@@ -93,7 +92,7 @@
         <div class="grid-feed">
             {% for article in feed_articles %}
             <a href="{% url 'article_detail' article.id %}" class="masonry-card">
-                <img src="{% if article.cover_image %}{{ article.cover_image.url }}{% else %}{{ article.fallback_image }}{% endif %}"
+                <img src="{% if article.cover_image_url %}{{ article.cover_image_url }}{% elif article.cover_image %}{{ article.cover_image.url }}{% else %}{{ article.fallback_image }}{% endif %}"
                     alt="{{ article.title }}">
                 <div class="card-body">
                     <h4>{{ article.title }}</h4>
@@ -172,43 +171,56 @@
 {% if request.user.is_authenticated %}
 <script>
     (function() {
-        // --- Podcast Generation Logic ---
-        const podcastBtn = document.getElementById('podcast-generate-btn');
-        const podcastLoading = document.getElementById('podcast-loading');
-        const podcastPlayer = document.getElementById('podcast-audio-player');
+        // CSRF cookie reader (needed for POST requests)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
 
-        if (podcastBtn) {
-            podcastBtn.addEventListener('click', function() {
+        // --- Show My Article Logic ---
+        const articleBtn = document.getElementById('daily-article-btn');
+        const articleLoading = document.getElementById('daily-article-loading');
+
+        if (articleBtn) {
+            articleBtn.addEventListener('click', function() {
                 // UI Loading state
-                podcastBtn.style.display = 'none';
-                podcastLoading.style.display = 'block';
-                podcastPlayer.style.display = 'none';
+                articleBtn.style.display = 'none';
+                articleLoading.style.display = 'block';
 
-                fetch('/tts/podcast/', {
+                fetch('/feed/my-article/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
+                        'X-CSRFToken': getCookie('csrftoken') || '{{ csrf_token }}'
                     },
                     body: JSON.stringify({})
                 })
                 .then(r => r.json())
                 .then(data => {
-                    podcastLoading.style.display = 'none';
+                    articleLoading.style.display = 'none';
                     if (data.error) {
-                        alert('Podcast generation failed: ' + data.error);
-                        podcastBtn.style.display = 'inline-block';
-                    } else if (data.audio_url) {
-                        podcastPlayer.src = data.audio_url;
-                        podcastPlayer.style.display = 'block';
-                        podcastPlayer.play();
+                        alert('Article generation failed: ' + data.error);
+                        articleBtn.style.display = 'inline-block';
+                    } else if (data.article_url) {
+                        // Redirect to the personalized article
+                        window.location.href = data.article_url;
                     }
                 })
                 .catch(err => {
                     console.error(err);
-                    podcastLoading.style.display = 'none';
-                    alert('A network error occurred generating the podcast.');
-                    podcastBtn.style.display = 'inline-block';
+                    articleLoading.style.display = 'none';
+                    alert('A network error occurred generating your article.');
+                    articleBtn.style.display = 'inline-block';
                 });
             });
         }

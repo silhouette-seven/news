@@ -47,6 +47,7 @@ urlpatterns = [
     path('tts/voices/', tts_views.get_voices, name='tts_voices'),
     path('tts/article/<int:article_id>/', tts_views.generate_article_audio, name='tts_article_audio'),
     path('tts/podcast/', tts_views.generate_daily_podcast, name='tts_daily_podcast'),
+    path('feed/my-article/', tts_views.generate_daily_article, name='generate_daily_article'),
     path('', index_view, name='home'),
 ]
 

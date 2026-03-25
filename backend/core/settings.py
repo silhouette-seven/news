@@ -22,6 +22,7 @@ load_dotenv(BASE_DIR / '.env')
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '')
+NEWSAPI_KEY = os.getenv('NEWSAPI_KEY', '')
 
 
 # Quick-start development settings - unsuitable for production

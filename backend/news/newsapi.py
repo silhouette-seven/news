@@ -2,14 +2,20 @@ import requests
 import json
 from django.conf import settings
 
-def fetch_and_extend_news(query=None, category=None, count=5):
+def fetch_and_extend_news(query=None, category=None, country=None, count=5):
     """
-    Fetches real news from NewsAPI.org (either by category or query) and
+    Fetches real news from NewsAPI.org (either by category, query, or country) and
     expands the snippet into a full article using Gemini.
+    Returns a list of dicts with keys: title, summary, content, source_url,
+    cover_image_url, tags, category.
     """
-    newsapi_key = getattr(settings, 'NEWSAPI_KEY', '92fe0acbccb84838a00e1a7d9584040a')
-    gemini_key = getattr(settings, 'GEMINI_API_KEY', None)
-    
+    newsapi_key = getattr(settings, 'NEWSAPI_KEY', '')
+    gemini_key = getattr(settings, 'GEMINI_API_KEY', '')
+
+    if not newsapi_key:
+        print("NEWSAPI_KEY not found in settings.")
+        return []
+
     if not gemini_key:
         print("GEMINI_API_KEY not found in settings.")
         return []
@@ -18,9 +24,15 @@ def fetch_and_extend_news(query=None, category=None, count=5):
     if query:
         url = f"https://newsapi.org/v2/everything?q={query}&language=en&sortBy=publishedAt&pageSize={count}&apiKey={newsapi_key}"
     else:
-        # Default to top headlines
+        # Top headlines — support country filter
         cat_param = f"&category={category}" if category else ""
-        url = f"https://newsapi.org/v2/top-headlines?language=en{cat_param}&pageSize={count}&apiKey={newsapi_key}"
+        country_param = f"&country={country}" if country else ""
+        # NewsAPI requires either country or sources or q for top-headlines
+        if not country_param and not cat_param:
+            country_param = "&language=en"
+            url = f"https://newsapi.org/v2/top-headlines?{country_param}{cat_param}&pageSize={count}&apiKey={newsapi_key}"
+        else:
+            url = f"https://newsapi.org/v2/top-headlines?{country_param}{cat_param}&pageSize={count}&apiKey={newsapi_key}".replace("?&", "?")
 
     resp = requests.get(url, timeout=10)
     if resp.status_code != 200:
@@ -56,7 +68,7 @@ def fetch_and_extend_news(query=None, category=None, count=5):
         return []
 
     # 3. Extend with Gemini
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
     
     # We will ask Gemini to process a JSON array of inputs and return a JSON array of outputs
     input_json_str = json.dumps([{'title': item['original_title'], 'description': item['original_desc']} for item in news_items], ensure_ascii=False)
@@ -70,6 +82,11 @@ def fetch_and_extend_news(query=None, category=None, count=5):
         "1. 'title': The headline (you can refine the original headline or keep it).\n"
         "2. 'summary': A 1-2 sentence compelling summary of the news.\n"
         "3. 'content': The full extended article body (>= 200 words).\n"
+        "4. 'tags': A list of up to 3 relevant string tags.\n"
+        "5. 'category': The single best-fit category for this article from this list: "
+        "World, US Politics, UK, Climate Crisis, Middle East, Ukraine, Environment, Science, "
+        "Global Development, Football, Tech, Business, Entertainment, Sports, Health, Obituaries. "
+        "Pick the closest match. If none fit well, use 'World'.\n"
         f"Input Data:\n{input_json_str}"
     )
 
@@ -98,7 +115,9 @@ def fetch_and_extend_news(query=None, category=None, count=5):
                     'summary': ext.get('summary', news_items[i]['original_desc']),
                     'content': ext.get('content', ''),
                     'source_url': news_items[i]['source_url'],
-                    'cover_image_url': news_items[i]['cover_image_url']
+                    'cover_image_url': news_items[i]['cover_image_url'],
+                    'tags': ext.get('tags', []),
+                    'category': ext.get('category', 'World'),
                 })
         return final_articles
 
@@ -114,7 +133,9 @@ def fetch_and_extend_news(query=None, category=None, count=5):
                     'summary': item['original_desc'][:100] + "...",
                     'content': fallback_content,
                     'source_url': item['source_url'],
-                    'cover_image_url': item['cover_image_url']
+                    'cover_image_url': item['cover_image_url'],
+                    'tags': [],
+                    'category': 'World',
                 })
             return final_articles
         return []

@@ -51,7 +51,9 @@
                     {% for article in articles %}
                     <tr data-id="{{ article.id }}">
                         <td>
-                            {% if article.cover_image %}
+                            {% if article.cover_image_url %}
+                            <img src="{{ article.cover_image_url }}" class="dash-thumb">
+                            {% elif article.cover_image %}
                             <img src="{{ article.cover_image.url }}" class="dash-thumb">
                             {% else %}
                             <div class="dash-thumb-placeholder">—</div>

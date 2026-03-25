@@ -20,6 +20,7 @@ class NewsArticle(models.Model):
     summary = models.TextField()
     content = models.TextField()
     source_url = models.URLField(max_length=500, blank=True, null=True)
+    cover_image_url = models.URLField(max_length=500, blank=True, null=True)
     cover_image = models.ImageField(upload_to='article_covers/', blank=True, null=True)
     published_date = models.DateTimeField(auto_now_add=True)
     

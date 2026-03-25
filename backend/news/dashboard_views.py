@@ -200,51 +200,28 @@ def dashboard_generate_articles(request):
     if category_name:
         category, _ = Category.objects.get_or_create(name=category_name)
 
-    system_prompt = (
-        f"You are a reliable AI journalist for 'Geo-News'. Based on the following editorial direction, "
-        f"write exactly {count} unique news articles.\n\n"
-        f"Editorial direction: {prompt}\n\n"
-        f"CRITICAL: Each article MUST be based on REAL, RECENT, and VERIFIABLE news events. "
-        f"Do NOT invent or fabricate any news. Only report on events that have actually happened.\n\n"
-        f"Each article MUST be at least 200 words, detailed, and well-structured. "
-        f"Return the output STRICTLY as a valid JSON array. No markdown codeblocks.\n\n"
-        f"Each object must have:\n"
-        f"- \"title\": headline\n"
-        f"- \"summary\": 1-2 sentence summary\n"
-        f"- \"content\": full article (>= 200 words, paragraphs separated by newlines)\n"
-        f"- \"source_url\": URL to a reputable source covering this story\n"
-        f"- \"tags\": [\"Tag1\", \"Tag2\", \"Tag3\"]\n"
-    )
-
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    from .newsapi import fetch_and_extend_news
 
     try:
-        resp = http_requests.post(
-            gemini_url,
-            json={"contents": [{"parts": [{"text": system_prompt}]}]},
-            timeout=60,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        raw_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
-
-        if raw_text.startswith('```json'):
-            raw_text = raw_text[7:]
-        elif raw_text.startswith('```'):
-            raw_text = raw_text[3:]
-        if raw_text.endswith('```'):
-            raw_text = raw_text[:-3]
-
-        articles_data = json.loads(raw_text.strip())
+        articles_data = fetch_and_extend_news(query=prompt, category=category_name, count=count)
+        if not articles_data:
+             return JsonResponse({'error': 'Failed to generate articles from newsapi.'}, status=500)
+             
         created = []
-
         for ad in articles_data:
+            # Use pipeline-detected category if no explicit category was given
+            article_category = category
+            if not article_category:
+                detected_cat_name = ad.get('category', 'World')
+                article_category, _ = Category.objects.get_or_create(name=detected_cat_name)
+
             article = NewsArticle.objects.create(
                 title=ad.get('title', 'Untitled'),
                 summary=ad.get('summary', ''),
                 content=ad.get('content', ''),
-                category=category,
+                category=article_category,
                 source_url=ad.get('source_url', ''),
+                cover_image_url=ad.get('cover_image_url', ''),
             )
             # Attach tags
             tags_list = ad.get('tags', [])
@@ -267,7 +244,7 @@ def dashboard_generate_articles(request):
         return JsonResponse({'articles': created})
 
     except Exception as e:
-        return JsonResponse({'error': f'AI Generation failed: {str(e)}'}, status=500)
+        return JsonResponse({'error': f'Generation failed: {str(e)}'}, status=500)
 
 
 @staff_member_required(login_url='/dashboard/login/')
@@ -295,7 +272,7 @@ def dashboard_refine_article(request):
         f"Title: {title}\n"
         f"Content:\n{content}\n\n"
         f"The editor's instructions are: {instruction}\n\n"
-        f"Provide the refined version. IMPORTANT: The article must remain factually accurate and grounded in reality. "
+        f"Provide the refined version. Use Information from the internet to fill in details. IMPORTANT: The article must remain factually accurate and grounded in reality. "
         f"Do NOT add fictional information. Only improve clarity, structure, grammar, and flow.\n\n"
         f"Return ONLY a JSON object with these keys:\n"
         f"- \"title\": refined title\n"

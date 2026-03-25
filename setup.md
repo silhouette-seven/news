@@ -1,6 +1,6 @@
-# Project Setup Guide
+# Geo-News — Project Setup Guide
 
-This document outlines how to recreate the development environment for the Redemption News Aggregator.
+This document outlines how to set up the development environment for the Geo-News Aggregator.
 
 ## Prerequisites
 - **Python 3.10+** (Tested on Python 3.14)
@@ -15,8 +15,6 @@ cd news
 ```
 
 ### 2. Create the Virtual Environment
-Create an isolated Python environment using `venv`. Note that the project codebase is located inside the `backend` folder.
-
 ```bash
 # Windows
 python -m venv backend\venv
@@ -39,31 +37,84 @@ source backend/venv/bin/activate
 cd backend
 pip install -r requirements.txt
 ```
-*(If you do not have a requirements.txt, you can install the required packages manually:)*
+If `requirements.txt` is missing:
 ```bash
 pip install django djangorestframework python-dotenv pillow requests
 ```
 
-### 5. Run Migrations & Database
-This repository comes pre-loaded with a populated SQLite database (`db_new.sqlite3`) containing over 30 verified articles and their downloaded cover images to ensure the UI renders beautifully upon first launch. 
-*(If you need to reset the database, simply delete `db_new.sqlite3` and run `python manage.py makemigrations` and `python manage.py migrate`)*
-
-### 6. Environment Variables
-Create a `.env` file in the `backend/` directory:
-```bash
-GEMINI_API_KEY=your_gemini_key_here
+### 5. Environment Variables
+Create a `.env` file in the `backend/` directory (alongside `manage.py`):
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
 NEWSAPI_KEY=your_newsapi_key_here
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 ```
-*(Note: A fallback NewsAPI key is embedded, but you must supply a Gemini key to generate new content extensions).*
 
-### 7. Load Sample Data (Optional)
-To fetch and generate 30 fresh news articles spanning different categories using the NewsAPI + Gemini pipeline:
+| Key | Required | Purpose |
+|-----|----------|---------|
+| `GEMINI_API_KEY` | **Yes** | Powers AI article extension, personalized articles, and AI assistant |
+| `NEWSAPI_KEY` | **Yes** | Fetches real news headlines from NewsAPI.org |
+| `ELEVENLABS_API_KEY` | Optional | Enables article voiceover / TTS feature |
+
+> **Note:** Get a free Gemini API key at https://aistudio.google.com/apikey and a free NewsAPI key at https://newsapi.org/register.
+
+### 6. Database
+This repository ships with a pre-populated SQLite database (`db_new.sqlite3`) containing articles and cover images so the UI renders on first launch.
+
+To **use the existing database** — no action needed.
+
+To **reset and start fresh**:
 ```bash
-python manage.py generate_sections
+del db_new.sqlite3        # Windows
+# rm db_new.sqlite3       # Mac/Linux
+python manage.py makemigrations
+python manage.py migrate
 ```
 
-### 8. Run the Development Server
+### 7. Create an Admin Superuser (Optional)
+```bash
+python manage.py createsuperuser
+```
+
+### 8. Bulk Generate Articles (Optional)
+To populate with 20 fresh articles from NewsAPI + Gemini:
+```bash
+python bulk_generate.py
+```
+
+### 9. Run the Development Server
 ```bash
 python manage.py runserver
 ```
-Visit `http://127.0.0.1:8000/` in your browser.
+Visit **http://127.0.0.1:8000/** in your browser.
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Breaking News** | Country-based headlines via NewsAPI, auto-categorized |
+| **Local News** | Location-based articles generated on first visit |
+| **Personalized Feed** | Articles tailored to user interests and tag scores |
+| **Show My Article** | Daily 200-300 word personalized briefing (1 per day) |
+| **AI Assistant** | Ask AI questions about any article |
+| **Article Voiceover** | TTS using ElevenLabs (requires API key) |
+| **Dashboard** | Admin panel for article management at `/dashboard/` |
+
+## Project Structure
+```
+news/
+├── backend/
+│   ├── core/           # Django settings, URLs
+│   ├── news/           # News app (models, views, pipeline)
+│   │   ├── newsapi.py  # Central news pipeline (NewsAPI + Gemini)
+│   │   ├── breaking_news_task.py
+│   │   ├── tts_views.py
+│   │   └── ...
+│   ├── users/          # User management, feed, interactions
+│   ├── templates/      # HTML templates
+│   ├── static/         # CSS, images
+│   ├── bulk_generate.py
+│   ├── manage.py
+│   └── .env            # API keys (not committed)
+└── setup.md
+```

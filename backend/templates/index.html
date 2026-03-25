@@ -7,15 +7,7 @@
 {% block content %}
 <div class="marquee-container">
     <div class="marquee-content">
-        Trump's "Board of Peace": US President Donald Trump has officially signed the charter for the "Board of Peace"
-        at the World Economic Forum in Davos. The organization, which includes founding nations like Argentina, Egypt,
-        Pakistan, and the UAE, aims to resolve international conflicts, specifically focusing on a Gaza ceasefire plan.
-        The Greenland Dispute: Tensions eased slightly as President Trump ruled out using force to acquire Greenland,
-        though he confirmed a "framework deal" with NATO regarding the island is in progress.
-        Vietnam Leadership: Tô Lâm has been re-elected as General Secretary of the Communist Party of Vietnam,
-        consolidating his position as the country's most powerful leader.
-        Uganda Protests: Deadly protests have erupted in Uganda following disputed election results, with reports of at
-        least 30 people killed and thousands arrested.
+        Breaking News Here
     </div>
 </div>
 
@@ -52,163 +44,158 @@
 <div class="page-with-sidebar">
     <div class="page-main-content">
 
-<!-- ===================== PERSONALIZED SECTION ===================== -->
-{% if personalized_articles %}
-<section class="news-section" id="section-personalized">
-    <h2 class="news-section-title">
-        <span class="accent-bar" style="background-color: #ffffff;"></span>
-        <a href="{% url 'feed' %}" class="section-title-link" style="color: #fff; text-decoration: underline;">Your Personalized News ✦</a>
-    </h2>
-    <div class="grid-three-col">
-        {% for news in personalized_articles|slice:":3" %}
-        <a href="{% url 'personalized_article' news.id %}" class="three-col-card">
-            <img src="{{ news.cover_image_url }}" alt="{{ news.title }}">
-            <div class="card-body">
-                <h4>{{ news.title }}</h4>
-                <p>{{ news.summary }}</p>
-                <div class="meta">{{ news.created_at|date:'M d, Y' }} &bull; {{ news.topic }}</div>
+        <!-- ===================== PERSONALIZED SECTION ===================== -->
+        {% if personalized_articles %}
+        <section class="news-section" id="section-personalized">
+            <h2 class="news-section-title">
+                <span class="accent-bar" style="background-color: #ffffff;"></span>
+                <a href="{% url 'feed' %}" class="section-title-link"
+                    style="color: #fff; text-decoration: underline;">Your Personalized News ✦</a>
+            </h2>
+            <div class="grid-three-col">
+                {% for news in personalized_articles|slice:":3" %}
+                <a href="{% url 'personalized_article' news.id %}" class="three-col-card">
+                    <img src="{{ news.cover_image_url }}" alt="{{ news.title }}">
+                    <div class="card-body">
+                        <h4>{{ news.title }}</h4>
+                        <p>{{ news.summary }}</p>
+                        <div class="meta">{{ news.created_at|date:'M d, Y' }} &bull; {{ news.topic }}</div>
+                    </div>
+                </a>
+                {% endfor %}
             </div>
-        </a>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
+        </section>
+        {% endif %}
 
-<!-- ===================== DYNAMIC SECTIONS ===================== -->
-{% for section in sections %}
-<section class="news-section" id="section-{{ section.slug }}">
-    <h2 class="news-section-title">
-        <span class="accent-bar" style="background-color: {{ section.accent }};"></span>
-        <a href="{% url 'category_page' section.slug %}" class="section-title-link">{{ section.title }}</a>
-    </h2>
+        <!-- ===================== DYNAMIC SECTIONS ===================== -->
+        {% for section in sections %}
+        <section class="news-section" id="section-{{ section.slug }}">
+            <h2 class="news-section-title">
+                <span class="accent-bar" style="background-color: {{ section.accent }};"></span>
+                <a href="{% url 'category_page' section.slug %}" class="section-title-link">{{ section.title }}</a>
+            </h2>
 
-    {% if section.layout == "grid-bento" %}
-    <!-- LAYOUT: Bento Grid (varying sizes) -->
-    <div class="grid-bento">
-        {% for news in section.articles %}
-        <a href="{% url 'article_detail' news.id %}" class="bento-card">
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
-            <div class="bento-content">
-                <h4>{{ news.title }}</h4>
-                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+            {% if section.layout == "grid-bento" %}
+            <!-- LAYOUT: Bento Grid (varying sizes) -->
+            <div class="grid-bento">
+                {% for news in section.articles %}
+                <a href="{% url 'article_detail' news.id %}" class="bento-card">
+                    <img src="{{ news.fallback_image }}" alt="{{ news.title }}">
+                    <div class="bento-content">
+                        <h4>{{ news.title }}</h4>
+                        <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                    </div>
+                </a>
+                {% endfor %}
             </div>
-        </a>
-        {% endfor %}
-    </div>
 
-    {% elif section.layout == "grid-guardian" %}
-    <!-- LAYOUT: Guardian (Featured Left + Sub-cards Right) -->
-    <div class="news-section-grid">
-        {% for news in section.articles %}
-        {% if forloop.first %}
-        <a href="{% url 'article_detail' news.id %}" class="featured-card">
-            <span class="featured-tag">{{ news.category.name }}</span>
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
-                alt="{{ news.title }}">
-            <h3>{{ news.title }}</h3>
-            <p>{{ news.summary }}</p>
-            <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
-        </a>
-        <div class="sub-cards-column">
-            {% else %}
-            <a href="{% url 'article_detail' news.id %}" class="sub-card">
-                <div class="sub-card-text">
-                    <div class="sub-tag">{{ news.category.name }}</div>
-                    <h4>{{ news.title }}</h4>
+            {% elif section.layout == "grid-guardian" %}
+            <!-- LAYOUT: Guardian (Featured Left + Sub-cards Right) -->
+            <div class="news-section-grid">
+                {% for news in section.articles %}
+                {% if forloop.first %}
+                <a href="{% url 'article_detail' news.id %}" class="featured-card">
+                    <span class="featured-tag">{{ news.category.name }}</span>
+                    <img src="{{ news.fallback_image }}" alt="{{ news.title }}">
+                    <h3>{{ news.title }}</h3>
                     <p>{{ news.summary }}</p>
                     <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                </a>
+                <div class="sub-cards-column">
+                    {% else %}
+                    <a href="{% url 'article_detail' news.id %}" class="sub-card">
+                        <div class="sub-card-text">
+                            <div class="sub-tag">{{ news.category.name }}</div>
+                            <h4>{{ news.title }}</h4>
+                            <p>{{ news.summary }}</p>
+                            <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                        </div>
+                        <img src="{{ news.fallback_image }}" alt="{{ news.title }}">
+                    </a>
+                    {% endif %}
+                    {% if forloop.last %}
                 </div>
-                <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
-                    alt="{{ news.title }}">
-            </a>
-            {% endif %}
-            {% if forloop.last %}
-        </div>
-        {% endif %}
-        {% endfor %}
-    </div>
-
-    {% elif section.layout == "grid-three-col" %}
-    <!-- LAYOUT: Three-column equal grid -->
-    <div class="grid-three-col">
-        {% for news in section.articles %}
-        <a href="{% url 'article_detail' news.id %}" class="three-col-card">
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
-                alt="{{ news.title }}">
-            <div class="card-body">
-                <h4>{{ news.title }}</h4>
-                <p>{{ news.summary }}</p>
-                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                {% endif %}
+                {% endfor %}
             </div>
-        </a>
-        {% endfor %}
-    </div>
 
-    {% elif section.layout == "grid-feature-heavy" %}
-    <!-- LAYOUT: Feature-heavy (full-width hero + row of sub-cards) -->
-    <div class="grid-feature-heavy">
-        {% for news in section.articles %}
-        {% if forloop.first %}
-        <a href="{% url 'article_detail' news.id %}" class="feature-heavy-hero">
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
-                alt="{{ news.title }}">
-            <div class="card-body">
-                <h3>{{ news.title }}</h3>
-                <p>{{ news.summary }}</p>
+            {% elif section.layout == "grid-three-col" %}
+            <!-- LAYOUT: Three-column equal grid -->
+            <div class="grid-three-col">
+                {% for news in section.articles %}
+                <a href="{% url 'article_detail' news.id %}" class="three-col-card">
+                    <img src="{{ news.fallback_image }}" alt="{{ news.title }}">
+                    <div class="card-body">
+                        <h4>{{ news.title }}</h4>
+                        <p>{{ news.summary }}</p>
+                        <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                    </div>
+                </a>
+                {% endfor %}
             </div>
-        </a>
-        <div class="feature-heavy-row">
-            {% else %}
-            <a href="{% url 'article_detail' news.id %}" class="fh-card">
-                <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
-                    alt="{{ news.title }}">
-                <div>
-                    <h4>{{ news.title }}</h4>
-                    <p>{{ news.summary }}</p>
+
+            {% elif section.layout == "grid-feature-heavy" %}
+            <!-- LAYOUT: Feature-heavy (full-width hero + row of sub-cards) -->
+            <div class="grid-feature-heavy">
+                {% for news in section.articles %}
+                {% if forloop.first %}
+                <a href="{% url 'article_detail' news.id %}" class="feature-heavy-hero">
+                    <img src="{{ news.fallback_image }}" alt="{{ news.title }}">
+                    <div class="card-body">
+                        <h3>{{ news.title }}</h3>
+                        <p>{{ news.summary }}</p>
+                    </div>
+                </a>
+                <div class="feature-heavy-row">
+                    {% else %}
+                    <a href="{% url 'article_detail' news.id %}" class="fh-card">
+                        <img src="{{ news.fallback_image }}" alt="{{ news.title }}">
+                        <div>
+                            <h4>{{ news.title }}</h4>
+                            <p>{{ news.summary }}</p>
+                        </div>
+                    </a>
+                    {% endif %}
+                    {% if forloop.last %}
                 </div>
-            </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            {% elif section.layout == "grid-masonry" %}
+            <!-- LAYOUT: Two-column Masonry -->
+            <div class="grid-masonry">
+                {% for news in section.articles %}
+                <a href="{% url 'article_detail' news.id %}" class="masonry-card">
+                    <img src="{{ news.fallback_image }}" alt="{{ news.title }}">
+                    <div class="card-body">
+                        <h4>{{ news.title }}</h4>
+                        <p>{{ news.summary }}</p>
+                        <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+
+            {% elif section.layout == "grid-compact-list" %}
+            <!-- LAYOUT: Compact list view for dense sections -->
+            <div class="grid-compact-list">
+                {% for news in section.articles %}
+                <a href="{% url 'article_detail' news.id %}" class="compact-list-card">
+                    <img src="{{ news.fallback_image }}" alt="{{ news.title }}">
+                    <div class="text-content">
+                        <h4>{{ news.title }}</h4>
+                        <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+
             {% endif %}
-            {% if forloop.last %}
-        </div>
-        {% endif %}
+        </section>
         {% endfor %}
-    </div>
-
-    {% elif section.layout == "grid-masonry" %}
-    <!-- LAYOUT: Two-column Masonry -->
-    <div class="grid-masonry">
-        {% for news in section.articles %}
-        <a href="{% url 'article_detail' news.id %}" class="masonry-card">
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}"
-                alt="{{ news.title }}">
-            <div class="card-body">
-                <h4>{{ news.title }}</h4>
-                <p>{{ news.summary }}</p>
-                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-
-    {% elif section.layout == "grid-compact-list" %}
-    <!-- LAYOUT: Compact list view for dense sections -->
-    <div class="grid-compact-list">
-        {% for news in section.articles %}
-        <a href="{% url 'article_detail' news.id %}" class="compact-list-card">
-            <img src="{% if news.cover_image %}{{ news.cover_image.url }}{% else %}{{ news.fallback_image }}{% endif %}" alt="{{ news.title }}">
-            <div class="text-content">
-                <h4>{{ news.title }}</h4>
-                <div class="meta">{{ news.published_date|date:'M d, Y' }}</div>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-
-    {% endif %}
-</section>
-{% endfor %}
     </div> <!-- End main content -->
-    
+
     <!-- ===================== SIDEBAR ===================== -->
     <aside class="page-sidebar">
         <div class="sidebar-widgets">

@@ -313,7 +313,7 @@
 </div>
 
 <!-- Cover Image -->
-{% if is_personalized and article.cover_image_url %}
+{% if article.cover_image_url %}
 <img class="article-cover" src="{{ article.cover_image_url }}" alt="{{ article.title }}">
 {% elif article.cover_image %}
 <img class="article-cover" src="{{ article.cover_image.url }}" alt="{{ article.title }}">

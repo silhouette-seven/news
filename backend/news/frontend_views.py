@@ -68,7 +68,9 @@ def _annotate_articles(queryset, category_name):
     """Attach a unique fallback_image attribute to each article in a queryset."""
     articles = list(queryset)
     for article in articles:
-        if article.cover_image:
+        if getattr(article, 'cover_image_url', None):
+            article.fallback_image = article.cover_image_url
+        elif article.cover_image:
             article.fallback_image = article.cover_image.url
         else:
             cat_name = article.category.name if article.category else category_name
@@ -94,7 +96,7 @@ def index_view(request):
             "content": article.content,
             "location": "Global",
             "date": article.published_date.strftime('%B %d, %Y'),
-            "image": article.cover_image.url if article.cover_image else get_fallback_image(cat_name, article.id)
+            "image": getattr(article, 'cover_image_url', None) or (article.cover_image.url if article.cover_image else get_fallback_image(cat_name, article.id))
         })
 
     # Build sections dynamically based on database categories
